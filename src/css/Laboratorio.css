@@ -1,0 +1,42 @@
+.sidebar{
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 300px;
+    overflow-y: auto;
+}
+#laboratorio-main{
+    position: relative;
+    width: calc(100% - 300px);
+    top: 0;
+    left: 300px;
+    overflow: auto;
+}
+
+.background-laboratorio{
+    background-color: #EEEFF1;
+}
+
+.custom-table{
+    border-collapse: collapse;
+    width: 100%;
+    
+}
+
+/* background-color: rgba(0, 0, 0, .03);*/
+
+.custom-table th{
+    padding: 4px;
+    color: rgba(108,117,125);
+}
+
+.custom-table td{
+    padding: 6px;
+    height: 20px;
+}
+.custom-table tr{
+    border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+
