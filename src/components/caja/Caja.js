@@ -42,6 +42,7 @@ function Caja() {
     const [hiddenAlert, setHiddenAlert] = useState(true);
     const [examenHidden, setExamenHidden] = useState(true);
     const [examenes, setExamenes] = useState(initialExamenes);
+
     //Use Effects
     useEffect(() => {
         if (dataToEdit) {
@@ -72,9 +73,12 @@ function Caja() {
     };
 
     const handleChecked = (e) => {
-        let newArray = [...examenes, e.target.id];
-        if (examenes.includes(e.target.id)) {
-            newArray = newArray.filter(examen => examen !== e.target.id);
+        let newArray = [...examenes];
+        let index=examenes.findIndex(exa=>exa.id_tipo===e.target.value);
+        if(index>=0){
+            newArray.splice(index,1);
+        }else{
+            newArray.push({id_tipo:e.target.value,tablename:e.target.id});
         }
         setExamenes(newArray);
     }
@@ -122,18 +126,18 @@ function Caja() {
     const save = async () => {
         try {
             setShowLoader(true);
-            //let response = await axios.post(END_POINT + 'caja', form);
             console.log({
                 ...form,
                 examenes
             });
+            let response = await axios.post(END_POINT + 'caja', {...form,examenes});
+            
             setForm(initialForm);
             setShowLoader(false);
             setIsDisabledForm(false);
         } catch (error) {
             alert("Ha ocurrido un error: " + error);
             setShowLoader(false);
-
         }
     };
 
@@ -329,6 +333,7 @@ function Caja() {
                                     <Form.Check
                                         type={'checkbox'}
                                         id={'bioquimica'}
+                                        value={1}
                                         label={`Bioquimica sanguinea`}
                                         onChange={handleChecked}
                                     />
@@ -337,6 +342,7 @@ function Caja() {
                                     <Form.Check
                                         type={'checkbox'}
                                         id={'coprologia'}
+                                        value={2}
                                         label={`Coprologia EDA`}
                                         onChange={handleChecked}
                                     />
@@ -347,6 +353,7 @@ function Caja() {
                                     <Form.Check
                                         type={'checkbox'}
                                         id={'coproparasitario'}
+                                        value={3}
                                         label={`Coproparasitario`}
                                         onChange={handleChecked}
                                     />
@@ -354,7 +361,8 @@ function Caja() {
                                 <Col>
                                     <Form.Check
                                         type={'checkbox'}
-                                        id={'orina'}
+                                        id={'examen_orina'}
+                                        value={4}
                                         label={`Examen de orina`}
                                         onChange={handleChecked}
                                     />
@@ -364,7 +372,8 @@ function Caja() {
                                 <Col>
                                     <Form.Check
                                         type={'checkbox'}
-                                        id={'heces'}
+                                        id={'helicobacter_heces'}
+                                        value={5}
                                         label={`Helicobacter heces`}
                                         onChange={handleChecked}
                                     />
@@ -373,7 +382,8 @@ function Caja() {
                                     <Form.Check
                                         type={'checkbox'}
                                         id={'bioquimica'}
-                                        label={`helycobacter`}
+                                        value={6}
+                                        label={`helicobacter_pylori`}
                                         onChange={handleChecked}
                                     />
                                 </Col>
@@ -382,7 +392,8 @@ function Caja() {
                                 <Col>
                                     <Form.Check
                                         type={'checkbox'}
-                                        id={'bioquimica'}
+                                        id={'hematologia'}
+                                        value={7}
                                         label={`Hematologia`}
                                         onChange={handleChecked}
                                     />
@@ -390,7 +401,8 @@ function Caja() {
                                 <Col>
                                     <Form.Check
                                         type={'checkbox'}
-                                        id={'bioquimica'}
+                                        id={'hemoglobina_glicosilada'}
+                                        value={8}
                                         label={`Hemoglobina`}
                                         onChange={handleChecked}
                                     />
@@ -400,7 +412,8 @@ function Caja() {
                                 <Col>
                                     <Form.Check
                                         type={'checkbox'}
-                                        id={'bioquimica'}
+                                        id={'embarazo'}
+                                        value={9}
                                         label={`Prueba de embarazo`}
                                         onChange={handleChecked}
                                     />
@@ -408,7 +421,8 @@ function Caja() {
                                 <Col>
                                     <Form.Check
                                         type={'checkbox'}
-                                        id={'bioquimica'}
+                                        id={'tiroideas'}
+                                        value={10}
                                         label={`Prueba de tiroideas`}
                                         onChange={handleChecked}
                                     />

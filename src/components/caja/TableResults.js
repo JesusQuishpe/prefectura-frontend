@@ -2,7 +2,7 @@ import React from 'react'
 import { Table } from 'react-bootstrap';
 import { RowResult } from './RowResult';
 
-export const TableResults = ({ result, setDataToEdit,setIsFounded }) => {
+export const TableResults = ({ result, setDataToEdit,setIsDisabledForm }) => {
     return (
         <>
             <Table>
@@ -23,7 +23,7 @@ export const TableResults = ({ result, setDataToEdit,setIsFounded }) => {
                         result.length === 0 ? <tr><td colSpan={8}>No hay resultados de la busqueda</td></tr>
                             :
                             result.map(data => {
-                                return (<RowResult data={data} key={data.id} setDataToEdit={setDataToEdit} setIsFounded={setIsFounded}/>)
+                                return (<RowResult data={data} key={data.id} setDataToEdit={setDataToEdit} setIsDisabledForm={setIsDisabledForm}/>)
                             })
                     }
                 </tbody>

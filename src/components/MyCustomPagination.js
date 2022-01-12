@@ -5,6 +5,7 @@ import { MdOutlineFirstPage, MdOutlineLastPage } from 'react-icons/md'
 import '../css/Pagination.css'
 export const MyCustomPagination = ({ data, setData }) => {
 
+    
     const handleNext = async (e) => {
         if (data.next_page_url) {
             let response = await axios.get(data.next_page_url);

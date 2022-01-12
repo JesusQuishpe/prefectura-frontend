@@ -1,6 +1,7 @@
 import logo from './logo.svg';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom'
 import 'bootstrap/dist/css/bootstrap.min.css';
+import 'bootstrap/dist/js/bootstrap.js';
 import Caja from './components/caja/Caja';
 import Enfermeria from './components/enfermeria/Enfermeria';
 import { Laboratorio } from './components/laboratorio/Laboratorio';

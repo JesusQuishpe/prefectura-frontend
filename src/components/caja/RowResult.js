@@ -1,9 +1,10 @@
 import React from 'react'
 
-export const RowResult = ({ data,setDataToEdit,setIsFounded}) => {
+export const RowResult = ({ data,setDataToEdit,setIsDisabledForm}) => {
+
     const handleOnClik=()=>{
         setDataToEdit(data);
-        setIsFounded(true);
+        setIsDisabledForm(true);
     }
     return (
         <tr  className='align-middle text-center'>
