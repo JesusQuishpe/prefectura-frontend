@@ -4,11 +4,14 @@ import { Formik, Form, Field, ErrorMessage, useFormikContext, useField } from 'f
 import * as Yup from 'yup';
 import { END_POINT } from '../../../utils/conf';
 import axios from 'axios';
-import LaboratorioContext from '../../../contexts/LaboratorioContext';
+import ModalContext from '../../../contexts/ModalContext';
 
-export const CoprologiaForm = () => {
+export const CoprologiaForm = ({ dataModal, closeModal, actualizarPendientes,doctores,openToast,closeToast}) => {
+    
     var initialForm = {
-        id_doc:"",
+        id_cita: dataModal.id_cita,
+        id_tipo: dataModal.id_tipo,
+        id_doc: "",
         consistencia: "",
         moco: "",
         sangre: "",
@@ -26,31 +29,15 @@ export const CoprologiaForm = () => {
         esteatorrea: "",
         observaciones: ""
     };
+
     //States
-    const [dataToEdit, setDataToEdit] = useState(initialForm);
-    const [doctores, setDoctores] = useState(null);
-    //Contexts
-    const { dataModal, closeModal,
-        actualizarPendientesYExamen, dataPaciente} = useContext(LaboratorioContext);
+    const [dataToEdit, setDataToEdit] = useState({...initialForm,...dataModal});
+    
     //Use Effects
     useEffect(() => {
-        const setInitialValuesIfIsEdit = async () => {
-            if (dataModal.isEdit) {
-                var response = await axios.get(END_POINT + `examenPorTipo?id_tipo=${dataModal.id_tipo}&id=${dataModal.id}`);
-                console.log(response.data.data);
-                setDataToEdit(response.data.data);
-                console.log(dataToEdit);
-            }
-
-        }
-        const getDoctores = async () => {
-            const response = await axios.get(END_POINT + "doctores");
-            console.log(response);
-            setDoctores(response.data.data);
-        };
-        getDoctores();
-        setInitialValuesIfIsEdit();
+        console.log(dataModal);
     }, []);
+
     return (
         <div>
             <Formik
@@ -75,17 +62,37 @@ export const CoprologiaForm = () => {
                         protozoarios: Yup.number().typeError('Debe ser numerico').required('El campo es requerido'),
                         helmintos: Yup.number().typeError('Debe ser numerico').required('El campo es requerido'),
                         esteatorrea: Yup.number().typeError('Debe ser numerico').required('El campo es requerido'),
-                        observaciones:Yup.string().required('El campo es requerido')
+                        observaciones: Yup.string().required('El campo es requerido')
                     })
                 }
 
                 onSubmit={async (valores) => {
-                    console.log("formulario enviado coprologia");
-                    let form = { ...valores, atendido: 1 };
-                    console.log(form);
-                    let response = await axios.put(END_POINT + `coprologias/${dataModal.id}`, form);
-                    actualizarPendientesYExamen(dataPaciente.cedula, "bioquimica");
-                    closeModal();
+                    try {
+                        if(dataModal.pendiente){
+                            if (dataModal.pendiente === 0) {//Es editar
+                                await axios.put(END_POINT + `coprologias/${dataModal.id}`, valores);
+                                //Actualizamos el campo pendiente de la tabla Pendientes
+                                //await axios.put(END_POINT + `pendientes/${dataModal.id_pendiente}`, pend);
+                            } else {
+                                await axios.post(END_POINT + `coprologias`, valores);
+                            }
+                            await actualizarPendientes(dataModal.id_cita);
+                        }else{//Cuando hace submit del historial clinico para editar
+                            await axios.put(END_POINT + `coprologias/${dataModal.id}`, valores);
+                        }
+                        closeModal();
+                        openToast("Datos guardados",true);
+                        /*setTimeout(()=>{
+                            closeToast();
+                        },2000);*/
+                    } catch (error) {
+                        console.error(error);
+                        openToast("Ha ocurrido un error",false);
+                        /*setTimeout(()=>{
+                            closeToast();
+                        },2000);*/
+                    }
+                    
                 }}
             >
                 {

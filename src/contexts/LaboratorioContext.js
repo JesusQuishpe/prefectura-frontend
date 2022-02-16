@@ -48,7 +48,8 @@ const LaboratorioContextProvider = ({ children }) => {
     }
 
     const getPendientes = (cedula) => {
-        return axios.get(END_POINT + `pendientes?cedula=${cedula}`)
+        //return axios.get(END_POINT + `pendientes?cedula=${cedula}`)
+        return axios.get(END_POINT+`citas?cedula=${cedula}&atendido=${false}&area=Laboratorio`);
     }
 
     const getExamen = (cedula, table) => {
@@ -70,16 +71,16 @@ const LaboratorioContextProvider = ({ children }) => {
     const cargarDatosLaboratorio = async (cedula) => {
         try {
             let responsePaciente = await getPaciente(cedula);
-            let responsePendientes = await getPendientes(cedula);
-            let responseExamen = await getExamen(cedula, "bioquimica");
-
             console.log(responsePaciente);
+            let responsePendientes = await getPendientes(cedula);
+            //let responseExamen = await getExamen(cedula, "bioquimica");
+
             console.log(responsePendientes);
-            console.log(responseExamen);
+            //console.log(responseExamen);
 
             setDataPaciente(responsePaciente.data);
             setDataPendientes(responsePendientes.data.data);
-            setDataExamen(responseExamen.data.data);
+            //setDataExamen(responseExamen.data.data);
 
         } catch (error) {
             alert("El paciente no existe");

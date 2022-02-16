@@ -2,8 +2,8 @@ import React, { useContext } from 'react'
 import LaboratorioContext from '../../contexts/LaboratorioContext'
 import { RowHistorial } from './RowHistorial'
 
-export const HistorialTable = () => {
-    const {dataExamen}=useContext(LaboratorioContext);
+export const HistorialTable = ({data}) => {
+    //const {dataExamen}=useContext(LaboratorioContext);
     return (
         <table className='custom-table'>
             <thead>
@@ -16,7 +16,7 @@ export const HistorialTable = () => {
             </thead>
             <tbody>
                 {
-                    dataExamen ? dataExamen.data.map((exa, index) => {
+                    data ? data.map((exa, index) => {
                         return (
                             <RowHistorial data={exa} key={index}/>
                         )

@@ -1,35 +1,44 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Col, Form as FormReact, Row } from 'react-bootstrap';
 import { Formik, Form, Field, ErrorMessage, useFormikContext, useField } from 'formik';
 import * as Yup from 'yup';
+import { END_POINT } from '../../../utils/conf';
+import axios from 'axios';
 
-export const HematologiaForm = () => {
+export const HematologiaForm = ({ dataModal, closeModal, actualizarPendientes, doctores, openToast, closeToast }) => {
+    var initialForm = {
+        id_cita: dataModal.id_cita,
+        id_tipo: dataModal.id_tipo,
+        id_doc: "",
+        sedimento: "",
+        hematocrito: "",
+        hemoglobina: "",
+        hematies: "",
+        leucocitos: "",
+        segmentados: "",
+        linfocitos: "",
+        eosinofilos: "",
+        monocitos: "",
+        t_coagulacion: "",
+        t_sangria: "",
+        t_plaquetas: "",
+        t_protombina_tp: "",
+        t_parcial_de_tromboplastine: "",
+        fibrinogeno: "",
+        observaciones: ""
+    };
+    //States
+    const [dataToEdit, setDataToEdit] = useState({ ...initialForm, ...dataModal });//Se agrega los datos del dataModal, que contiene el id_pendiente
     return (
         <div>
             <Formik
                 initialValues={
-                    {
-                        sedimento: "",
-                        hematocrito: "",
-                        hemoglobina: "",
-                        hematies: "",
-                        leucocitos: "",
-                        segmentados: "",
-                        linfocitos: "",
-                        eosinofilos: "",
-                        monocitos: "",
-                        t_coagulacion: "",
-                        t_sangria: "",
-                        t_plaquetas:"",
-                        t_protombina_tp:"",
-                        t_parcial_de_tromboplastine:"",
-                        fibrinogeno:"",
-                        observaciones:""
-                    }
+                    dataToEdit
                 }
 
                 validationSchema={
                     Yup.object({
+                        id_doc: Yup.string().required('Debe seleccionar un doctor'),
                         sedimento: Yup.number().typeError('Debe ser numerico').required('El campo es requerido'),
                         hematocrito: Yup.number().typeError('Debe ser numerico').required('El campo es requerido'),
                         hemoglobina: Yup.number().typeError('Debe ser numerico').required('El campo es requerido'),
@@ -49,15 +58,59 @@ export const HematologiaForm = () => {
                     })
                 }
 
-                onSubmit={(valores) => {
-                    console.log("formulario enviado hematologia");
+                onSubmit={async(valores) => {
+                    try {
+                        if(dataModal.pendiente){
+                            if (dataModal.pendiente === 0) {//Es editar
+                                await axios.put(END_POINT + `hematologias/${dataModal.id}`, valores);
+                                //Actualizamos el campo pendiente de la tabla Pendientes
+                                //await axios.put(END_POINT + `pendientes/${dataModal.id_pendiente}`, pend);
+                            } else {
+                                await axios.post(END_POINT + `hematologias`, valores);
+                            }
+                            await actualizarPendientes(dataModal.id_cita);
+                        }else{//Cuando hace submit del historial clinico para editar
+                            await axios.put(END_POINT + `hematologias/${dataModal.id}`, valores);
+                        }
+                        closeModal();
+                        openToast("Datos guardados", true);
+                        /*setTimeout(() => {
+                            closeToast();
+                        }, 2000);*/
+                    } catch (error) {
+                        console.error(error);
+                        openToast("Ha ocurrido un error", false);
+                        /*setTimeout(() => {
+                            closeToast();
+                        }, 2000);*/
+                    }
                 }}
             >
                 {
                     ({ errors, touched }) => (
                         <Form id='form-hematologia'>
                             <h3 className='text-start '>Hematología</h3>
+                            <Row>
+                                <FormReact.Group>
+                                    <FormReact.Label>
+                                        Doctor:
+                                    </FormReact.Label>
+                                    <Col>
+                                        <Field name="id_doc" as="select" className={`form-select ${touched.id_doc && errors.id_doc && 'error'}`}>
+                                            <option value="">Selecciona un doctor</option>
+                                            {
 
+                                                doctores ? doctores.map((doctor) => {
+                                                    return (<option key={doctor.id} value={doctor.id}>{doctor.nombres}</option>)
+                                                })
+                                                    :
+                                                    ''
+                                            }
+                                        </Field>
+                                        <ErrorMessage name='id_doc' component={() => (<FormReact.Text className="text-danger">{errors.id_doc}</FormReact.Text>)} />
+                                    </Col>
+                                </FormReact.Group>
+                            </Row>
                             <Row>
                                 <FormReact.Group as={Col} className="mb-3" controlId="sedimento">
                                     <FormReact.Label>
@@ -213,7 +266,7 @@ export const HematologiaForm = () => {
                             </Row>
                             <h3 className='border-bottom border-2 border-secondary text-start '>Observaciones</h3>
                             <FormReact.Group className="mb-3" controlId="observaciones">
-                                <Field as="textarea" rows={3} name='observaciones' className={`form-control ${touched.observaciones && errors.observaciones && 'error'}`}/>
+                                <Field as="textarea" rows={3} name='observaciones' className={`form-control ${touched.observaciones && errors.observaciones && 'error'}`} />
                                 <ErrorMessage name='observaciones' component={() => (<FormReact.Text className="text-danger">{errors.observaciones}</FormReact.Text>)} />
                             </FormReact.Group>
                         </Form>

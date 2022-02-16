@@ -3,11 +3,11 @@ import { Alert, Button, Modal } from 'react-bootstrap';
 import { OrinaForm } from './OrinaForm';
 
 
-export const ModalOrina = ({show,closeModal,onHide}) => {
-    
+export const ModalOrina = ({ closeModal, dataModal, actualizarPendientes, setShowLoader, doctores,openToast,closeToast }) => {
+
     return (
         <div>
-            <Modal show={show} onHide={onHide} dialogClassName='modal-25w'  size='lg'>
+            <Modal show={dataModal?.id_tipo === 4} onHide={closeModal} dialogClassName='modal-25w' size='lg'>
                 <Modal.Header closeButton>
                     <Modal.Title id="exampleModalLabel">Ingresar datos</Modal.Title>
                 </Modal.Header>
@@ -15,7 +15,15 @@ export const ModalOrina = ({show,closeModal,onHide}) => {
                     <Alert variant='info' hidden>
                         Los campos con<span className="text-danger ">&nbsp;*&nbsp;</span>son obligatorios.
                     </Alert>
-                    <OrinaForm />
+                    <OrinaForm
+                        dataModal={dataModal}
+                        closeModal={closeModal}
+                        setShowLoader={setShowLoader}
+                        actualizarPendientes={actualizarPendientes}
+                        doctores={doctores}
+                        openToast={openToast}
+                        closeToast={closeToast}
+                    />
                 </Modal.Body>
                 <Modal.Footer>
                     <Button variant="primary" form='form-orina' type='submit'>

@@ -8,12 +8,15 @@ const ModalContextProvider=({children})=>{
     const [dataToEdit, setDataToEdit] = useState({});
     const [isEdit, setIsEdit] = useState(false);
 
-    const openModal=()=>{
-        setShow(true);
+    const [dataModal, setDataModal] = useState({});
+
+
+    const openModal = (data) => {
+        setDataModal(data);
     }
 
-    const closeModal=()=>{
-        setDataToEdit({});
+    const closeModal = () => {
+        setDataModal({});
     }
 
     return (
@@ -25,7 +28,9 @@ const ModalContextProvider=({children})=>{
             setDataToEdit,
             setIsEdit,
             openModal,
-            closeModal
+            closeModal,
+            dataModal,
+            setDataModal
         }}>{children}
         </ModalContext.Provider>
     )

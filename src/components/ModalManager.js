@@ -13,7 +13,7 @@ import { ModalOrina } from "./laboratorio/orina/ModalOrina"
 import { ModalTiroideas } from "./laboratorio/tiroideas/ModalTiroideas"
 
 const ModalManager = () => {
-    const {closeModal,dataModal}=useContext(LaboratorioContext);
+    const {closeModal,dataModal}=useContext(ModalContext);
     console.log("Manager");
     return (
 
@@ -22,6 +22,7 @@ const ModalManager = () => {
                 show={dataModal.id_tipo === 1}
                 closeModal={closeModal}
             />
+            
             <ModalCoprologia
                 show={dataModal.id_tipo === 2}
                 closeModal={closeModal}

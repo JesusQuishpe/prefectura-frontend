@@ -1,44 +1,55 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Col, Form as FormReact, Row } from 'react-bootstrap';
 import { Formik, Form, Field, ErrorMessage, useFormikContext, useField } from 'formik';
 import * as Yup from 'yup';
 import '../../../css/Errors.css';
+import { END_POINT } from '../../../utils/conf';
+import axios from 'axios';
 
-export const OrinaForm = () => {
+export const OrinaForm = ({ dataModal, closeModal, actualizarPendientes,doctores,openToast,closeToast}) => {
+    var initialForm = {
+        id_cita: dataModal.id_cita,
+        id_tipo: dataModal.id_tipo,
+        id_doc: "",
+        color: "",
+        olor: "",
+        sedimento: "",
+        ph: "",
+        densidad: "",
+        leucocituria: "",
+        nitritos: "",
+        albumina: "",
+        glucosa: "",
+        cetonas: "",
+        urobilinogeno: "",
+        bilirrubina: "",
+        sangre_enteros: "",
+        sangre_lisados: "",
+        acido_ascorbico: "",
+        hematies: "",
+        leucocitos: "",
+        cel_epiteliales: "",
+        fil_mucosos: "",
+        bacterias: "",
+        bacilos: "",
+        cristales: "",
+        cilindros: "",
+        piocitos: "",
+        observaciones: ""
+    };
+    //States
+    const [dataToEdit, setDataToEdit] = useState({ ...initialForm, ...dataModal });
+
     return (
         <div>
             <Formik
                 initialValues={
-                    {
-                        color: "",
-                        olor: "",
-                        sedimento: "",
-                        ph: "",
-                        densidad: "",
-                        leucocituria: "",
-                        nitritos: "",
-                        albumina: "",
-                        glucosa: "",
-                        cetonas: "",
-                        urobilinogeno: "",
-                        bilirrubina: "",
-                        sangre_enteros: "",
-                        sangre_lisados: "",
-                        acido_ascorbico: "",
-                        hematies: "",
-                        leucocitos: "",
-                        cel_epiteliales: "",
-                        fil_mucosos: "",
-                        bacterias: "",
-                        bacilos: "",
-                        cristales: "",
-                        cilindros: "",
-                        piocitos: ""
-                    }
+                    dataToEdit
                 }
 
                 validationSchema={
                     Yup.object({
+                        id_doc: Yup.string().required('Debe seleccionar un doctor'),
                         color: Yup.number().typeError('Debe ser numerico').required('El campo es requerido'),
                         olor: Yup.number().typeError('Debe ser numerico').required('El campo es requerido'),
                         sedimento: Yup.number().typeError('Debe ser numerico').required('El campo es requerido'),
@@ -63,16 +74,63 @@ export const OrinaForm = () => {
                         cristales: Yup.number().typeError('Debe ser numerico').required('El campo es requerido'),
                         cilindros: Yup.number().typeError('Debe ser numerico').required('El campo es requerido'),
                         piocitos: Yup.number().typeError('Debe ser numerico').required('El campo es requerido'),
+                        observaciones: Yup.string().required('El campo es requerido'),
                     })
                 }
 
-                onSubmit={(valores) => {
-                    console.log("formulario enviado coproparasitario");
+                onSubmit={async (valores) => {
+                    try {
+                        if(dataModal.pendiente){
+                            if (dataModal.pendiente === 0) {//Es editar
+                                await axios.put(END_POINT + `orinas/${dataModal.id}`, valores);
+                                //Actualizamos el campo pendiente de la tabla Pendientes
+                                //await axios.put(END_POINT + `pendientes/${dataModal.id_pendiente}`, pend);
+                            } else {
+                                await axios.post(END_POINT + `orinas`, valores);
+                            }
+                            await actualizarPendientes(dataModal.id_cita);
+                        }else{//Cuando hace submit del historial clinico para editar
+                            await axios.put(END_POINT + `orinas/${dataModal.id}`, valores);
+                        }
+                        closeModal();
+                        openToast("Datos guardados", true);
+                        /*setTimeout(() => {
+                            closeToast();
+                        }, 2000);*/
+                    } catch (error) {
+                        console.error(error);
+                        openToast("Ha ocurrido un error", false);
+                        /*setTimeout(() => {
+                            closeToast();
+                        }, 2000);*/
+                    }
+                    
                 }}
             >
                 {
                     ({ errors, touched }) => (
                         <Form id='form-orina'>
+                            <Row>
+                                <FormReact.Group>
+                                    <FormReact.Label>
+                                        Doctor:
+                                    </FormReact.Label>
+                                    <Col>
+                                        <Field name="id_doc" as="select" className={`form-select ${touched.id_doc && errors.id_doc && 'error'}`}>
+                                            <option value="">Selecciona un doctor</option>
+                                            {
+
+                                                doctores ? doctores.map((doctor) => {
+                                                    return (<option key={doctor.id} value={doctor.id}>{doctor.nombres}</option>)
+                                                })
+                                                    :
+                                                    ''
+                                            }
+                                        </Field>
+                                        <ErrorMessage name='id_doc' component={() => (<FormReact.Text className="text-danger">{errors.id_doc}</FormReact.Text>)} />
+                                    </Col>
+                                </FormReact.Group>
+                            </Row>
                             <h3 className='text-start '>Físico químico</h3>
 
                             <Row>
@@ -311,7 +369,8 @@ export const OrinaForm = () => {
                             </Row>
                             <h3 className='border-bottom border-2 border-secondary text-start '>Observaciones</h3>
                             <FormReact.Group className="mb-3" controlId="observaciones">
-                                <FormReact.Control as="textarea" rows={3} name='observaciones' />
+                                <Field as="textarea" rows={3} name='observaciones' className={`form-control ${touched.observaciones && errors.observaciones && 'error'}`} />
+                                <ErrorMessage name='observaciones' component={() => (<FormReact.Text className="text-danger">{errors.observaciones}</FormReact.Text>)} />
                             </FormReact.Group>
                         </Form>
                     )

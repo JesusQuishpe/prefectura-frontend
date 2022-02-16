@@ -1,14 +1,12 @@
-import axios from 'axios';
-import React, { useContext, useState } from 'react'
+import React, {useEffect, useState } from 'react'
 import { Button, Col, Form, Row } from 'react-bootstrap'
-import { Link, useNavigate } from 'react-router-dom'
-import { UserContext } from '../../contexts/UserContext';
-import { END_POINT } from '../../utils/conf';
+import { useNavigate } from 'react-router-dom';
+import { useUser } from '../../hooks/useUser';
+
 
 export const Login = () => {
-    const navigate = useNavigate();
-    const {user,setUser} = useContext(UserContext);
-
+  const navigate=useNavigate();
+    const { login,isLogged } = useUser();
     const initialForm = {
         email: "",
         password: ""
@@ -25,24 +23,23 @@ export const Login = () => {
 
     const handleClick = async (e) => {
         try {
-            if(!user){
-                let response = await axios.post(END_POINT + "login", form);
-                setUser(response.data.user);
-                console.log(response);
-            }
-            navigate("/caja");
+            login(form);
         } catch (error) {
-            if(error.response.status===422){
+            /*if(error.response.status===422){
                 alert("Debe proporcionar un correo valido");
                 return;
-            }
-            if(error.response.status===401){
+            }*/
+            if (error.response.status === 401) {
                 alert("Error las credenciales");
                 return;
             }
-            
         }
     };
+
+    useEffect(() => {
+      if(isLogged) return navigate('/');
+    }, [isLogged]);
+    
     return (
         <div className='d-flex justify-content-center align-items-center min-vh-100'>
             <Form className='w-50 border  shadow p-4'>
@@ -60,7 +57,7 @@ export const Login = () => {
                         Contraseña:
                     </Form.Label>
                     <Col>
-                        <Form.Control type="text" name='password' value={form.password} onChange={handleChange} />
+                        <Form.Control type="password" name='password' value={form.password} onChange={handleChange} />
                     </Col>
                 </Form.Group>
                 <div className='d-flex justify-content-end'>

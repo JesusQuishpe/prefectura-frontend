@@ -2,10 +2,10 @@ import React, { useContext } from 'react'
 import { Button } from 'react-bootstrap'
 import { AiFillDelete, AiFillEdit } from 'react-icons/ai'
 import { FaFilePdf } from 'react-icons/fa'
-import LaboratorioContext from '../../contexts/LaboratorioContext'
+import ModalContext from '../../contexts/ModalContext'
 
 export const RowHistorial = ({data}) => {
-    const {setDataModal}=useContext(LaboratorioContext);
+    const {setDataModal}=useContext(ModalContext);
     return (
         <tr>
             <td>{data.doctor}</td>

@@ -80,7 +80,7 @@ const MyField = (props) => {
     );
 }
 
-export const BioquimicaForm = () => {
+export const BioquimicaForm = ({ dataModal, closeModal, actualizarPendientes, doctores, openToast, closeToast }) => {
     var initialForm = {
         id_doc: "",
         glucosa: "",
@@ -120,34 +120,13 @@ export const BioquimicaForm = () => {
         observaciones: ""
     };
     //const { form, loading, errors, response, handleChange, handleSubmit } = useForm(initialForm, validationForm);
-    const { dataModal,closeModal,
-        actualizarPendientesYExamen,dataPaciente} = useContext(LaboratorioContext);
+    /*const { dataModal,closeModal,
+        actualizarPendientesYExamen,dataPaciente} = useContext(ModalContext);*/
 
-    const [doctores, setDoctores] = useState(null);
-    const [dataToEdit, setDataToEdit] = useState(initialForm);
-
-    
-
+    const [dataToEdit, setDataToEdit] = useState({ ...initialForm, ...dataModal });
 
     useEffect(() => {
-        const setInitialValuesIfIsEdit = async () => {
-            if (dataModal.isEdit) {
-                var response = await axios.get(END_POINT + `examenPorTipo?id_tipo=${dataModal.id_tipo}&id=${dataModal.id}`);
-                console.log(response.data.data);
-                setDataToEdit(response.data.data);
-                console.log(dataToEdit);
-            }
-
-        }
-
-        const getDoctores = async () => {
-            const response = await axios.get(END_POINT + "doctores");
-            console.log(response);
-            setDoctores(response.data.data);
-        };
-        
-        getDoctores();
-        setInitialValuesIfIsEdit();
+        console.log(dataModal);
     }, []);
 
     return (
@@ -195,18 +174,31 @@ export const BioquimicaForm = () => {
                 }
 
                 onSubmit={async (valores) => {
-                    console.log("formulario enviado");
-                    let form = { ...valores, atendido: 1 };
-                    console.log(form);
-                    
-                    /*showToast({
-                        show:true,
-                        title:"Informacioon",
-                        message:"Se ha guardado correctamente"
-                    });*/
-                    let response=await axios.put(END_POINT+`bioquimicas/${dataModal.id}`,form);
-                    actualizarPendientesYExamen(dataPaciente.cedula,"bioquimica")
-                    closeModal();
+                    try {
+                        if (dataModal.pendiente) {
+                            if (dataModal.pendiente === 0) {//Es editar
+                                await axios.put(END_POINT + `bioquimicas/${dataModal.id}`, valores);
+                                //Actualizamos el campo pendiente de la tabla Pendientes
+                                //await axios.put(END_POINT + `pendientes/${dataModal.id_pendiente}`, pend);
+                            } else {
+                                await axios.post(END_POINT + `bioquimicas`, valores);
+                            }
+                            await actualizarPendientes(dataModal.id_cita);
+                        } else {//Cuando hace submit del historial clinico para editar
+                            await axios.put(END_POINT + `bioquimicas/${dataModal.id}`, valores);
+                        }
+                        closeModal();
+                        openToast("Datos guardados", true);
+                        /*setTimeout(() => {
+                            closeToast();
+                        }, 2000);*/
+                    } catch (error) {
+                        console.error(error);
+                        openToast("Ha ocurrido un error", false);
+                        /*setTimeout(() => {
+                            closeToast();
+                        }, 2000);*/
+                    }
                 }}
             >
                 {
