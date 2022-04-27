@@ -5,7 +5,7 @@ import { useUser } from 'hooks/useUser';
 import React, { useContext, useEffect, useRef, useState } from 'react';
 import { Button, Card, Form, FormControl, InputGroup, Row, Spinner } from 'react-bootstrap';
 import DataTable from 'react-data-table-component';
-import { AiFillDelete, AiFillEdit, AiFillFileAdd } from 'react-icons/ai';
+import { AiFillDelete, AiOutlineReload, AiFillFileAdd } from 'react-icons/ai';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import CajaService from 'services/CajaService';
 import { END_POINT } from '../../utils/conf';
@@ -291,23 +291,15 @@ export const CajaDashboard = () => {
                     />
                     {isFinishSearch ? ">>" : "Buscando..."}
                   </Button>
-                  {/*<Button variant="secondary" type='submit' disabled={!isFinishSearch}>
-                  <Spinner
-                    as="span"
-                    animation="grow"
-                    size="sm"
-                    role="status"
-                    aria-hidden="true"
-                    className={`me-1 ${isFinishSearch && "visually-hidden"}`}
-
-                  />
-                  {isFinishSearch ? "QR" : "Buscando..."}
-                    </Button>*/}
+                  <Button onClick={() => {
+                    inputFullnameRef.current.value = ""
+                    searchByFullname(1)
+                  }}><AiOutlineReload className='me-2' />Recargar</Button>
                 </InputGroup>
               </Form>
               <div className='h-100'>
                 <DataTable
-                
+
                   columns={columns}
                   data={citas.data}
                   pagination

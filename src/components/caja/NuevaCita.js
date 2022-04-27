@@ -204,7 +204,7 @@ function NuevaCita() {
         ...form, testsOfPatient: getRowData()
       });
       //console.log(user);
-      await CajaService.saveCita({ ...form, user_id: user.id, tests: getRowData() })
+      await CajaService.saveCita({ ...form, user_id: user.id, tests: getRowData(),initial_value:form.value })
       setForm(initialForm)
       setIsDisabledForm(false)
       closeLoader()

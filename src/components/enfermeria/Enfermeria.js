@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef, useContext } from 'react'
 import { END_POINT } from '../../utils/conf';
 import { ModalEnfermeria } from './ModalEnfermeria';
 import { Button } from 'react-bootstrap';
-import { AiFillDelete, AiFillFileAdd } from 'react-icons/ai';
+import { AiFillDelete, AiFillFileAdd,AiOutlineReload } from 'react-icons/ai';
 import { AgGridReact } from 'ag-grid-react';
 import 'ag-grid-community/dist/styles/ag-grid.css';
 import 'ag-grid-community/dist/styles/ag-theme-alpine.css';
@@ -41,7 +41,7 @@ function Enfermeria() {
   const deleteRecord = async (appoId) => {
     try {
       await axios.delete(END_POINT + `enfermerias/${appoId}`)
-      
+
       loadPatientQueue()
       closeDeleteModal()
       //console.log(props);
@@ -135,10 +135,17 @@ function Enfermeria() {
     })
   }
 
+  const handleReload = () => {
+    loadPatientQueue()
+  }
+
   return (
     <>
       <div className='w-100 p-4'>
         <h1 className='text-center'>Area de enfermería</h1>
+        <div className='d-flex justify-content-end mb-3'>
+          <Button onClick={handleReload}><AiOutlineReload className='me-2'/>Recargar</Button>
+        </div>
         <div className="ag-theme-alpine" style={{ height: 450, width: "100%" }}>
           <AgGridReact
             ref={gridRef}
@@ -152,7 +159,7 @@ function Enfermeria() {
             overlayNoRowsTemplate={
               '<span class="text-center">No hay pacientes que mostrar</span>'
             }
-            onGridReady={()=>{
+            onGridReady={() => {
               loadPatientQueue()
             }}
           >

@@ -26,3 +26,7 @@ PatientService.updatePatient = async (patient) => {
   return response.data
 }
 
+PatientService.searchByIdentification = async (identification) => {
+  let response = await axios.get(END_POINT + `pacientes?identification=${identification}&isSearch=true`)
+  return response.data.data
+}

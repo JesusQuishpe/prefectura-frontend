@@ -1,7 +1,7 @@
 import axios from 'axios';
 import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { Button, Card } from 'react-bootstrap';
-import { AiFillDelete, AiFillFileAdd } from 'react-icons/ai';
+import { AiFillDelete, AiFillFileAdd,AiOutlineReload  } from 'react-icons/ai';
 import { Link } from 'react-router-dom';
 import { END_POINT } from '../../utils/conf';
 import { AgGridReact } from 'ag-grid-react';
@@ -99,6 +99,7 @@ export const OdontologiaEnEspera = () => {
 
 
   const loadPatientQueue = async () => {
+    gridRef.current.api.showLoadingOverlay()
     let response = await axios.get(END_POINT + `odontologia/pacientes`);
     let patients=response.data.data
     if(patients.length===0){
@@ -109,11 +110,16 @@ export const OdontologiaEnEspera = () => {
     console.log(patients);
     setData(patients)
   }
-  
+  const handleReload = () => {
+    loadPatientQueue()
+  }
   return (
     <>
       <div className='w-100 p-4'>
         <h1 className='text-center'>Area de odontología</h1>
+        <div className='d-flex justify-content-end mb-3'>
+          <Button onClick={handleReload}><AiOutlineReload className='me-2'/>Recargar</Button>
+        </div>
         <div className="ag-theme-alpine" style={{ height: 525, width: "100%" }}>
           <AgGridReact
             ref={gridRef}
@@ -129,7 +135,7 @@ export const OdontologiaEnEspera = () => {
               '<span class="text-center">No hay filas que mostrar</span>'
             }
             onGridReady={async (e) => {
-              e.api.showLoadingOverlay()
+              
               await loadPatientQueue()
             }}
             
