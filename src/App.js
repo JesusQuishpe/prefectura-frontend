@@ -44,17 +44,16 @@ import { NotFound } from 'components/NotFound';
 
 
 function App() {
-
   return (
     <div className="App">
-      <Router >{/*El basename basename='/tesis-sistema/tesis-backend/public/ se agrega solo para ejecutar el comando npm run build */}
+      <Router basename={process.env.REACT_APP_BASENAME}>{/*El basename basename='/tesis-sistema/tesis-backend/public/ se agrega solo para ejecutar el comando npm run build */}
         <ToastProvider>
           <LoaderProvider>
             <UserProvider>
               <DeleteModalProvider>
                 <Routes>
                   <Route path="/" element={<Home />}>
-                    <Route path="citas" element={<Outlet/>} >
+                    <Route path="citas" element={<Outlet />} >
                       <Route
                         index
                         element={
@@ -374,7 +373,7 @@ function App() {
                   </Route>
 
                   <Route path="/login" exact element={<Login />}></Route>
-                  <Route path="*" element={<NotFound/>}></Route>
+                  <Route path="*" element={<NotFound />}></Route>
 
                 </Routes>
               </DeleteModalProvider>
