@@ -1,23 +1,27 @@
-import axios from 'axios';
-import React, { useEffect, useState } from 'react';
-import { Col, Row } from 'react-bootstrap';
-import { END_POINT } from 'utils/conf';
-import  SimboloItem  from './SimboloItem';
+import React, { useContext, useEffect, useState } from 'react';
+import SimboloItem from './SimboloItem';
 import LimpiarIcono from 'assets/svg/clean.svg';
-
-
+import OdontogramaContext from 'contexts/OdontogramaContext';
+import OdontologyService from 'services/OdontologyService';
 
 export const Paleta = () => {
-  const [simbologias, setSimbologias] = useState(null);
+  const { optionSelected, updateOption } = useContext(OdontogramaContext)
+  const [symbologies, setSymbologies] = useState(null);
 
-  const getSimbologias = async () => {
-    let response = await axios.get(END_POINT + 'odontologia/simbologias');
-    setSimbologias(response.data.data);
+  const getSymbologies = async () => {
+    let symbologiesFromService = await OdontologyService.getSymbologies()
+    setSymbologies(symbologiesFromService);
   }
 
   useEffect(() => {
-    getSimbologias();
+    getSymbologies();
   }, []);
+
+  const onOptionClick = (e, params) => {
+    console.log(e.target, params);
+    updateOption(params)//Actualizamos el contexto
+  }
+
   return (
     <>
       <div className='paleta-container'>
@@ -25,9 +29,13 @@ export const Paleta = () => {
           <p className='fw-bold mb-2'>Simbologías</p>
           <div className='simbolo-grid'>
             {
-              simbologias ? simbologias.map((simbolo) => {
+              symbologies ? symbologies.map((symb) => {
                 return (
-                  <SimboloItem key={simbolo.id} simbolo={simbolo} />
+                  <SimboloItem
+                    key={symb.id}
+                    symbologie={symb}
+                    onClick={onOptionClick}
+                    isSelected={optionSelected?.data.name === symb.name ? true : false} />
                 )
               }) : ""
             }
@@ -37,13 +45,16 @@ export const Paleta = () => {
           <div className='d-flex flex-column mb-2'>
             <p className='fw-bold mb-2'>Colores</p>
             <div className='d-flex'>
-              <div className='color-blue'></div>
-              <div className='color-red'></div>
+              <div className={`paleta-blue ${optionSelected?.data.name === "color-blue" ? "option-selected" : null}`}
+                onClick={(e) => onOptionClick(e, { type: "color", data: { colorClassName: "color-blue", name: "color-blue" } })}></div>
+              <div className={`paleta-red ${optionSelected?.data.name === "color-red" ? "option-selected" : null}`}
+                onClick={(e) => onOptionClick(e, { type: "color", data: { colorClassName: "color-red", name: "color-red" } })}></div>
             </div>
           </div>
           <div>
             <p className='fw-bold mb-2'>Limpiar</p>
-            <div className='d-flex justify-content-center align-items-center border p-3'>
+            <div className='d-flex justify-content-center align-items-center border p-3 btn-limpiar' 
+            onClick={(e) => onOptionClick(e,{ type: "limpiar", data: {  name: "limpiar",path:"" } })}>
               <img src={LimpiarIcono} width={"24px"} />
             </div>
           </div>

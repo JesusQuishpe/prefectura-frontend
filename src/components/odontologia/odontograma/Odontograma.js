@@ -1,106 +1,127 @@
-import axios from 'axios';
-import React, { useEffect, useState } from 'react';
+import OdontogramaContext from 'contexts/OdontogramaContext';
+import domtoimage from 'dom-to-image';
+import React, { createRef, forwardRef, useContext, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { Alert, Col, Row } from 'react-bootstrap';
-import { END_POINT } from 'utils/conf';
-import { Cuadrante } from './Cuadrante';
+import { dataURLtoFile } from 'utils/utilidades';
+import Cuadrante from './Cuadrante';
 import { MovilidadRecesion } from './MovilidadRecesion';
 import { Paleta } from './paleta/Paleta';
-import { SeccionDientes } from './SeccionDientes';
 
-const Odontograma = () => {
-  console.log("ODONTROGRAMA");
-  const [dientes, setDientes] = useState();
 
-  const cargarDientes = async () => {
-    let response = await axios.get(END_POINT + "odontologia/dientes");
-    setDientes(response.data.data);
-  }
+const Odontograma = forwardRef(({ tabkey }, ref) => {
+  let odontogramRef = useRef()
 
-  useEffect(() => {
-    cargarDientes();
-  }, []);
+  const {
+    id,
+    teeth,
+    editedTeeth,
+    movilitiesRecessions,
+    getAcceptedTeeth,
+    getAcceptedMovilitiesRecessions,
+    isOdontogramEmpty
+  } = useContext(OdontogramaContext)
+
+
+  useImperativeHandle(ref, () => {
+    return {
+      id,
+      getAcceptedTeeth,
+      getAcceptedMovilitiesRecessions,
+      movilitiesRecessions,
+      odontogramElement:odontogramRef.current,
+      isOdontogramEmpty
+    }
+  })
 
   return (
     <>
-      <div className=''>
+      <div>
         <Alert variant='primary'>
           Pintar con: azul para tratamiento realizado - rojo para patología actual
           Movilidad y recesión: Marcar "X" (1,2 ó 3), Si aplica.
         </Alert>
-        <div className='grid-odontograma'>
+        <div className='grid-odontograma' ref={odontogramRef}>
           <div>Recesión</div>
-          <MovilidadRecesion start={0} end={8} />
-          <MovilidadRecesion start={8} end={16} />
+          <MovilidadRecesion start={0} end={8} type={"recesion"} details={movilitiesRecessions} />
+          <MovilidadRecesion start={8} end={16} type={"recesion"} details={movilitiesRecessions} />
           <div>Movilidad</div>
-          <MovilidadRecesion start={16} end={24} />
-          <MovilidadRecesion start={24} end={32} />
+          <MovilidadRecesion start={16} end={24} type={"movilidad"} details={movilitiesRecessions} />
+          <MovilidadRecesion start={24} end={32} type={"movilidad"} details={movilitiesRecessions} />
           <div className='align-self-center'>Vestibular</div>
           <Cuadrante
             key={1}
-            cuadrante={1}
-            dientes={dientes ? dientes.filter((diente) => diente.cuadrante === 1 && diente.tipo === "Vestibular") : []}
-            tipo={"Vestibular"}
+            quadrant={1}
+            teeth={teeth ? teeth.filter((t) => t.quadrant === 1 && t.type === "Vestibular") : []}
+            type={"Vestibular"}
             reverse={false}
+            details={editedTeeth}
           />
           <Cuadrante
             key={2}
-            cuadrante={2}
-            dientes={dientes ? dientes.filter((diente) => diente.cuadrante === 2 && diente.tipo === "Vestibular") : []}
-            tipo={"Vestibular"}
+            quadrant={2}
+            teeth={teeth ? teeth.filter((t) => t.quadrant === 2 && t.type === "Vestibular") : []}
+            type={"Vestibular"}
             reverse={false}
+            details={editedTeeth}
           />
-          <div className='align-self-center' style={{gridRowStart:4,gridRowEnd:"span 2"}}>Lingual</div>
+          <div className='align-self-center' style={{ gridRowStart: 4, gridRowEnd: "span 2" }}>Lingual</div>
           <Cuadrante
             key={3}
-            cuadrante={5}
-            dientes={dientes ? dientes.filter((diente) => diente.cuadrante === 5 && diente.tipo === "Lingual") : []}
-            tipo={"Lingual"}
+            quadrant={5}
+            teeth={teeth ? teeth.filter((t) => t.quadrant === 5 && t.type === "Lingual") : []}
+            type={"Lingual"}
             reverse={false}
+            details={editedTeeth}
           />
           <Cuadrante
             key={4}
-            cuadrante={6}
-            dientes={dientes ? dientes.filter((diente) => diente.cuadrante === 6 && diente.tipo === "Lingual") : []}
-            tipo={"Lingual"}
+            quadrant={6}
+            teeth={teeth ? teeth.filter((t) => t.quadrant === 6 && t.type === "Lingual") : []}
+            type={"Lingual"}
             reverse={false}
+            details={editedTeeth}
           />
-          
+
           <Cuadrante
             key={5}
-            cuadrante={8}
-            dientes={dientes ? dientes.filter((diente) => diente.cuadrante === 8 && diente.tipo === "Lingual") : []}
-            tipo={"Lingual"}
+            quadrant={8}
+            teeth={teeth ? teeth.filter((t) => t.quadrant === 8 && t.type === "Lingual") : []}
+            type={"Lingual"}
             reverse={true}
+            details={editedTeeth}
           />
           <Cuadrante
             key={6}
-            cuadrante={7}
-            dientes={dientes ? dientes.filter((diente) => diente.cuadrante === 7 && diente.tipo === "Lingual") : []}
-            tipo={"Lingual"}
+            quadrant={7}
+            teeth={teeth ? teeth.filter((t) => t.quadrant === 7 && t.type === "Lingual") : []}
+            type={"Lingual"}
             reverse={true}
+            details={editedTeeth}
           />
-          <div  className='align-self-center'>Vestibular</div>
+          <div className='align-self-center'>Vestibular</div>
           <Cuadrante
             key={7}
-            cuadrante={4}
-            dientes={dientes ? dientes.filter((diente) => diente.cuadrante === 4 && diente.tipo === "Vestibular") : []}
-            tipo={"Vestibular"}
+            quadrant={4}
+            teeth={teeth ? teeth.filter((t) => t.quadrant === 4 && t.type === "Vestibular") : []}
+            type={"Vestibular"}
             reverse={true}
+            details={editedTeeth}
           />
           <Cuadrante
             key={8}
-            cuadrante={3}
-            dientes={dientes ? dientes.filter((diente) => diente.cuadrante === 3 && diente.tipo === "Vestibular") : []}
-            tipo={"Vestibular"}
+            quadrant={3}
+            teeth={teeth ? teeth.filter((t) => t.quadrant === 3 && t.type === "Vestibular") : []}
+            type={"Vestibular"}
             reverse={true}
+            details={editedTeeth}
           />
           <div>Recesión</div>
-          <MovilidadRecesion start={32} end={40} />
-          <MovilidadRecesion start={40} end={48} />
+          <MovilidadRecesion start={32} end={40} type={"recesion"} details={movilitiesRecessions} />
+          <MovilidadRecesion start={40} end={48} type={"recesion"} details={movilitiesRecessions} />
           <div>Movilidad</div>
-          <MovilidadRecesion start={48} end={56} />
-          <MovilidadRecesion start={56} end={64} />
-          
+          <MovilidadRecesion start={48} end={56} type={"movilidad"} details={movilitiesRecessions} />
+          <MovilidadRecesion start={56} end={64} type={"movilidad"} details={movilitiesRecessions} />
+
         </div>
         <Col className='paleta'>
           <Paleta />
@@ -109,6 +130,6 @@ const Odontograma = () => {
 
     </>
   );
-};
-export default  React.memo(Odontograma)
+})
+export default Odontograma
 

@@ -4,9 +4,9 @@ import React, { useContext, useEffect, useState } from 'react';
 import { Button, Form as FormReact } from 'react-bootstrap';
 import { useParams } from 'react-router-dom';
 import * as Yup from 'yup';
-import ToastContext from '../../../contexts/ToastContext';
-import { END_POINT } from '../../../utils/conf';
-import { MyToast } from '../../MyToast';
+import ToastContext from 'contexts/ToastContext';
+import { END_POINT } from 'utils/conf';
+
 
 export const RolForm = () => {
   const { idRol } = useParams();
@@ -14,14 +14,14 @@ export const RolForm = () => {
   const { openToast } = useContext(ToastContext);
 
   const initialForm = {
-    nombre: ""
+    name: ""
   }
 
   const [form, setForm] = useState(initialForm);
 
-  const crearRol = async (rol) => {
+  const createRole = async (rol) => {
     try {
-      let response = await axios.post(END_POINT + "roles", rol);
+      await axios.post(END_POINT + "roles", rol);
       openToast("Registro creado", true);
     } catch (error) {
       openToast("No se pudo crear el registro", false);
@@ -30,9 +30,9 @@ export const RolForm = () => {
 
   }
 
-  const actualizarRol = async (valores) => {
+  const updateRole = async (values) => {
     try {
-      let response = await axios.put(END_POINT + `roles/${idRol}`, valores);
+      await axios.put(END_POINT + `roles/${idRol}`, values);
       openToast("Registro actualizado", true);
     } catch (error) {
       openToast("No se pudo actualizar el registro", false);
@@ -43,9 +43,9 @@ export const RolForm = () => {
 
   const getRolById = async (id) => {
     let response = await axios.get(END_POINT + `roles/${id}`);
-    let { nombre } = response.data.data;
-    console.log(nombre);
-    setForm({ nombre });
+    let { name } = response.data.data;
+    console.log(name);
+    setForm({ name });
   }
 
   useEffect(() => {
@@ -66,16 +66,16 @@ export const RolForm = () => {
 
           validationSchema={
             Yup.object({
-              nombre: Yup.string().required('El campo es requerido'),
+              name: Yup.string().required('El campo es requerido'),
             })
           }
 
-          onSubmit={async (valores, { resetForm }) => {
-            console.log(valores);
+          onSubmit={async (values, { resetForm }) => {
+            console.log(values);
             if (!isEdit) {
-              await crearRol(valores);
+              await createRole(values);
             } else {
-              await actualizarRol(valores);
+              await updateRole(values);
             }
             resetForm({ values: initialForm });
           }}
@@ -83,11 +83,10 @@ export const RolForm = () => {
           {
             ({ errors, touched }) => (
               <Form id='form-newuser'>
-
                 <FormReact.Group className='mb-4'>
                   <FormReact.Label>Nombre:</FormReact.Label>
-                  <Field name="nombre" className={`form-control ${touched.nombre && errors.nombre && 'error'}`} type="text" />
-                  <ErrorMessage name='nombre' component={() => (<FormReact.Text className="text-danger">{errors.nombre}</FormReact.Text>)} />
+                  <Field name="name" className={`form-control ${touched.name && errors.name && 'error'}`} type="text" />
+                  <ErrorMessage name='name' component={() => (<FormReact.Text className="text-danger">{errors.name}</FormReact.Text>)} />
                 </FormReact.Group>
                 <Button type='submit'>Guardar</Button>
               </Form>

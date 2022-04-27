@@ -1,14 +1,14 @@
 
 function roundToTwo(num) {
-  return +(Math.round(num + "e+2")  + "e-2");
+  return +(Math.round(num + "e+2") + "e-2");
 }
 
-function ordenarArrayEstudios(a,b) {
-  
-  if(a.id>b.id){
+function ordenarArrayEstudios(a, b) {
+
+  if (a.id > b.id) {
     return 1
   }
-  if(a.id<b.id){
+  if (a.id < b.id) {
     return -1
   }
   return 0
@@ -27,8 +27,54 @@ const transformDataToMap = (data) => {
   return map;
 }
 
+function formatNumber(number) {
+  return new Intl.NumberFormat("ES-EC", {
+    style: "currency",
+    currency: "USD"
+  }).format(number)
+}
+
+function dataURLtoFile(dataurl, filename) {
+  return new Promise((resolve,reject) => {
+    var arr = dataurl.split(','),
+      mime = arr[0].match(/:(.*?);/)[1],
+      bstr = atob(arr[1]),
+      n = bstr.length,
+      u8arr = new Uint8Array(n);
+
+    while (n--) {
+      u8arr[n] = bstr.charCodeAt(n);
+    }
+
+    resolve(new File([u8arr], filename, { type: mime }))
+  })
+
+}
+//Finds "Y" value of given element
+function findPos(element) {
+  var curtop = 0;
+  if (element.offsetParent) {
+      do {
+          curtop += element.offsetTop;
+      } while (element = element.offsetParent);
+  return [curtop];
+  }
+}
+
+const getOperandosDeFormula = (formula) => {
+  if (!formula || formula === "") return ""
+  const exp = /[A-Z]\w+/g
+  const matches = formula.match(exp)
+  const operandos = matches.join(",")
+  return operandos
+}
+
 export {
   roundToTwo,
   ordenarArrayEstudios,
-  transformDataToMap
+  transformDataToMap,
+  formatNumber,
+  dataURLtoFile,
+  findPos,
+  getOperandosDeFormula
 };

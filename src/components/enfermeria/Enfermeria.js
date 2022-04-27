@@ -1,150 +1,172 @@
 import axios from 'axios';
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useRef, useContext } from 'react'
 import { END_POINT } from '../../utils/conf';
-import { TableResults } from './TableResults';
 import { ModalEnfermeria } from './ModalEnfermeria';
-import { Breadcrumb, Button, Card, Nav, Tab, TabContainer, Tabs } from 'react-bootstrap';
-import DataTable from 'react-data-table-component'
+import { Button } from 'react-bootstrap';
 import { AiFillDelete, AiFillFileAdd } from 'react-icons/ai';
-import { FilterComponent } from 'components/FilterComponent';
-
+import { AgGridReact } from 'ag-grid-react';
+import 'ag-grid-community/dist/styles/ag-grid.css';
+import 'ag-grid-community/dist/styles/ag-theme-alpine.css';
+import { useDeleteModal } from 'hooks/useDeleteModal';
+import ToastContext from 'contexts/ToastContext';
 
 
 function Enfermeria() {
+  //Refs
+  const gridRef = useRef(null)
 
-	const Acciones = ({row}) => {
-		
-		return (
-			<div className='d-flex flex-nowrap'>
-				<Button variant='primary' className='me-2' onClick={() => openModal(row)}><AiFillFileAdd /></Button>
-				<Button variant='danger'><AiFillDelete /></Button>
-			</div>
-		)
-	}
+  const initialData = [];
+  const [data, setData] = useState(initialData);
+  const [parametersModal, setParametersModal] = useState({});
+  const { openModal: openDeleteModal, closeModal: closeDeleteModal } = useDeleteModal()
+  const { openToast } = useContext(ToastContext)
 
-	//Config datatable
-	const paginationConfig = {
-		rowsPerPageText: "Filas por página",
-		rangeSeparatorText: "de",
-		selectAllRowsItem: true,
-		selectAllRowsItemText: "Todos"
-	}
-	const columns = [
-		{
-			name: "N° cita",
-			selector: (row) => row.id_cita,
-			sortable: true,
-      width:"100px"
-		},
-		{
-			name: "Nombre completo",
-			selector: (row) => row.nombre_completo,
-			sortable: true,
-      width:"250px"
-		},
-		{
-			name: "Fecha de nacimiento",
-			selector: (row) => row.fecha_nacimiento,
-			sortable: true
-		},
-		{
-			name: "Area",
-			selector: (row) => row.area,
-			sortable: true
-		},
-		{
-			name: "Fecha cita",
-			selector: (row) => row.created_at,
-			sortable: true
-		},
-		{
-			name: "Acciones",
-			cell: (row) => <Acciones row={row}/>,
-			ignoreRowClick: true,
-		}
-	];
-
-	const initialData = [];
-
-	const [key, setKey] = useState('pacientes');
-	const [id_enfermeria, setIdEnfermeria] = useState(0)
-	const [data, setData] = useState(initialData);
-	const [showModal, setShowModal] = useState(false);
-	const [rowData,setRowData]=useState(null);
-
-	//Configuracion para filtrar en DataTable
-  const [filterText, setFilterText] = useState('');
-  const [resetPaginationToggle, setResetPaginationToggle] = useState(false);
-  const filteredItems = data.filter(
-    item => item.nombre_completo && item.nombre_completo.toLowerCase().includes(filterText.toLowerCase()),
-  );
-
-  const subHeaderComponentMemo = useMemo(() => {
-    const handleClear = () => {
-      if (filterText) {
-        setResetPaginationToggle(!resetPaginationToggle);
-        setFilterText('');
-      }
-    };
-
+  const Acciones = ({ data }) => {
+    const handleDeleteClick = () => {
+      openDeleteModal({
+        show: true,
+        id: data.appo_id,
+        message: `Nota: Al eliminar un registro , 
+        se eliminará la cita a la que pertenece.`,
+        deleteCallback: deleteRecord
+      })
+    }
     return (
-      <FilterComponent onFilter={e => setFilterText(e.target.value)} onClear={handleClear} filterText={filterText} />
-    );
-  }, [filterText, resetPaginationToggle]);
+      <div className='d-flex flex-nowrap'>
+        <Button variant='primary' className='me-2' onClick={() => openModal(data)}><AiFillFileAdd /></Button>
+        <Button variant='danger' onClick={handleDeleteClick}><AiFillDelete /></Button>
+      </div>
+    )
+  }
+  const deleteRecord = async (appoId) => {
+    try {
+      await axios.delete(END_POINT + `enfermerias/${appoId}`)
+      
+      loadPatientQueue()
+      closeDeleteModal()
+      //console.log(props);
+    } catch (error) {
+      console.log(error);
+      let message = error.response.data.message ?
+        error.response.data.message :
+        error.response.data.exception_message
+      openToast(message, false)
+    }
+  }
 
 
-	//Use Effects
-	useEffect(() => {
-		enEspera();
-	}, [])
+  //Functions
+  const loadPatientQueue = async () => {
+    try {
+      gridRef.current.api.showLoadingOverlay()
+      let response = await axios.get(END_POINT + "enfermeria/pacientes");
+      if (response.data.data.length === 0) {
+        gridRef.current.api.showNoRowsOverlay()
+      } else {
+        gridRef.current.api.hideOverlay()
+      }
+      console.log(response);
+      setData(response.data.data);
+    } catch (error) {
+      //gridRef.current.api.showNoRowsOverlay()
+      console.log(error);
+    }
+  };
+
+  const [columnDefs] = useState([
+    {
+      headerName: "N° cita",
+      field: "appo_id",
+      maxWidth: 150,
+      sortable: true,
+      filter: true,
+      floatingFilter: true,
+      suppressMenu: true
+    },
+    {
+      headerName: "Paciente",
+      field: "patient",
+      flex: 1,
+      sortable: true,
+      filter: true,
+      floatingFilter: true,
+      suppressMenu: true
+    },
+    {
+      headerName: "Area",
+      field: "area",
+      flex: 1,
+      sortable: true,
+      filter: true,
+      floatingFilter: true,
+      suppressMenu: true
+    },
+    {
+      headerName: "Fecha de cita",
+      field: "created_at",
+      flex: 1,
+      sortable: true,
+      filter: true,
+      floatingFilter: true,
+      suppressMenu: true
+    },
+    {
+      headerName: "Acciones",
+      cellRenderer: Acciones,
+      /*cellRendererParams: {
+        loadPatientQueue,
+        openModalConfirmation
+      }*/
+    }
+  ]);
 
 
-	//Functions
-	const enEspera = async () => {
-		let pacientes = await axios.get(END_POINT + "enfermeria/pacientes");
-		console.log(pacientes);
-		setData(pacientes.data);
-	};
+  const openModal = (data) => {
+    setParametersModal({
+      show: true,
+      data
+    })
+  };
 
-	const openModal = (row) => {
-		setRowData(row);
-		setShowModal(true);
-		console.log(row);
-	};
+  const closeModal = () => {
+    setParametersModal({
+      show: false,
+      data: null
+    })
+  }
 
-	const closeModal = () => {
-		setShowModal(false);
-		setRowData(null);
-	}
+  return (
+    <>
+      <div className='w-100 p-4'>
+        <h1 className='text-center'>Area de enfermería</h1>
+        <div className="ag-theme-alpine" style={{ height: 450, width: "100%" }}>
+          <AgGridReact
+            ref={gridRef}
+            rowData={data}
+            columnDefs={columnDefs}
+            rowSelection={'single'}
+            pagination
+            overlayLoadingTemplate={
+              '<span class="ag-overlay-loading-center">Cargando...</span>'
+            }
+            overlayNoRowsTemplate={
+              '<span class="text-center">No hay pacientes que mostrar</span>'
+            }
+            onGridReady={()=>{
+              loadPatientQueue()
+            }}
+          >
+          </AgGridReact>
+        </div>
+      </div>
 
-	return (
-		<>
-			<div className='w-75 mx-auto mt-4'>
-				<h1 className='text-center'>Enfermería</h1>
-				<Card>
-					<Card.Header>
-						Pacientes
-					</Card.Header>
-					<Card.Body>
-						<DataTable
-							columns={columns}
-							data={filteredItems}
-							title={'Tabla enfermeria'}
-							pagination
-							paginationComponentOptions={paginationConfig}
-              paginationResetDefaultPage={resetPaginationToggle} // optionally, a hook to reset pagination to page 1
-              subHeader
-              subHeaderComponent={subHeaderComponentMemo}
-              persistTableHead
-						/>
-					</Card.Body>
-				</Card>
-			</div>
+      <ModalEnfermeria
+        closeModal={closeModal}
+        parameters={parametersModal}
+        loadPatientQueue={loadPatientQueue} />
+    </>
 
-			<ModalEnfermeria show={showModal} closeModal={closeModal} row={rowData} actualizarPacientes={enEspera}/>
-		</>
-
-	)
+  )
 }
 
 export default Enfermeria

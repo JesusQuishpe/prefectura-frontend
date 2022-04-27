@@ -2,7 +2,7 @@ import { Button, Form } from "react-bootstrap";
 
 import React from 'react';
 
-export const FilterComponent = ({filterText,onFilter,onClear,placeholder}) => {
+export const FilterComponent = ({filterText,onFilter,onClear,placeholder},props) => {
   return (
     <>
 		<Form.Control
@@ -13,6 +13,7 @@ export const FilterComponent = ({filterText,onFilter,onClear,placeholder}) => {
 			value={filterText}
 			onChange={onFilter}
       className="w-50"
+      onKeyDown={props.onKeyDown}
 		/>
 	</>
   );

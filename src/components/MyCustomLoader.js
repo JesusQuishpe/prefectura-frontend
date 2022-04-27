@@ -20,8 +20,8 @@ const Spinner = styled.div`
 	border-bottom: 2px solid grey;
 	border-left: 4px solid black;
 	background: transparent;
-	width: 80px;
-	height: 80px;
+	width: 30px;
+	height: 30px;
 	border-radius: 50%;
 `;
 

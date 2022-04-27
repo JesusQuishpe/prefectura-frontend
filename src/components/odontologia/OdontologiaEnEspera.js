@@ -1,110 +1,141 @@
 import axios from 'axios';
-import { FilterComponent } from 'components/FilterComponent';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { Button, Card } from 'react-bootstrap';
-import DataTable from 'react-data-table-component';
 import { AiFillDelete, AiFillFileAdd } from 'react-icons/ai';
 import { Link } from 'react-router-dom';
 import { END_POINT } from '../../utils/conf';
+import { AgGridReact } from 'ag-grid-react';
+import 'ag-grid-community/dist/styles/ag-grid.css';
+import 'ag-grid-community/dist/styles/ag-theme-alpine.css';
+import OdontologyService from 'services/OdontologyService';
+import ToastContext from 'contexts/ToastContext';
+import { useDeleteModal } from 'hooks/useDeleteModal';
 
 export const OdontologiaEnEspera = () => {
+  const { openModal, closeModal } = useDeleteModal()
+  const { openToast } = useContext(ToastContext)
 
-  const [data, setData] = useState([]);
+  const deleteRecord = async (nurId) => {
+    try {
+      await OdontologyService.deleteRecord(nurId)
+      loadPatientQueue()
+      closeModal()
+      //console.log(props);
+    } catch (error) {
+      console.log(error);
+      let message = error.response.data.message ? error.response.data.message :
+        error.response.data.exception_message
+      openToast(message, false)
+    }
 
-  const cargarPacientesEnEspera = async () => {
-    let response = await axios.get(END_POINT + `odontologia/pacientes`);
-    console.log(response);
-    setData(response.data.data);
   }
-  useEffect(() => {
-    cargarPacientesEnEspera();
-  }, []);
 
-  //Configuracion datatable
-  const Acciones = ({ row }) => {
+  const Acciones = ({ data }) => {
+    const handleDeleteClick = () => {
+      openModal({
+        show: true,
+        id: data.nur_id,
+        message: `Nota: Al eliminar un registro , 
+        se eliminará los datos de enfermería y la cita a la que pertenece.`,
+        deleteCallback: deleteRecord
+      })
+    }
     return (
       <div className='d-flex flex-nowrap'>
-        <Link className='btn btn-primary me-2' to={`ficha/${row.id_cita}`}><AiFillFileAdd /></Link>
-        <Button variant='danger'><AiFillDelete /></Button>
+        <Link className='btn btn-primary me-2'
+          to={`/odontologia/cita/${data.appo_id}/nuevo`}
+
+        ><AiFillFileAdd /></Link>
+        <Button variant='danger' onClick={handleDeleteClick}><AiFillDelete /></Button>
       </div>
     )
   }
-
-  const columns = [
+  //Refs
+  const gridRef = useRef(null)
+  const [data, setData] = useState([]);
+  const [columnDefs] = useState([
     {
-      name: "N° cita",
-      selector: (row) => row.id_cita,
-      sortable: true
+      headerName: "N° cita",
+      field: "nur_id",
+      maxWidth: 150,
+      sortable: true,
+      filter: true,
+      floatingFilter: true,
+      suppressMenu: true
     },
     {
-      name: "Paciente",
-      selector: (row) => row.nombre_completo,
-      sortable: true
+      headerName: "Paciente",
+      field: "patient",
+      flex: 1,
+      sortable: true,
+      filter: true,
+      floatingFilter: true,
+      suppressMenu: true
     },
     {
-      name: "Fecha cita",
-      selector: (row) => row.fecha_cita,
-      sortable: true
+      headerName: "Fecha",
+      field: "date",
+      flex: 1,
+      sortable: true,
+      filter: true,
+      floatingFilter: true,
+      suppressMenu: true
     },
     {
-      name: "Hora cita",
-      selector: (row) => row.hora_cita,
-      sortable: true
+      headerName: "Hora",
+      field: "hour",
+      flex: 1,
+      sortable: true,
+      filter: true,
+      floatingFilter: true,
+      suppressMenu: true
     },
     {
-      name: "Acciones",
-      cell: (row) => <Acciones row={row} />,
-      ignoreRowClick: true,
+      headerName: "Acciones",
+      cellRenderer: Acciones,
     }
-  ]
+  ]);
 
-  const paginationConfig = {
-    rowsPerPageText: "Filas por página",
-    rangeSeparatorText: "de",
-    selectAllRowsItem: true,
-    selectAllRowsItemText: "Todos"
+
+
+  const loadPatientQueue = async () => {
+    let response = await axios.get(END_POINT + `odontologia/pacientes`);
+    let patients=response.data.data
+    if(patients.length===0){
+      gridRef.current.api.showNoRowsOverlay()
+    }else{
+      gridRef.current.api.hideOverlay()
+    }
+    console.log(patients);
+    setData(patients)
   }
-  //Configuracion para filtrar en DataTable
-  const [filterText, setFilterText] = useState('');
-  const [resetPaginationToggle, setResetPaginationToggle] = useState(false);
-  const filteredItems = data.filter(
-    item => item.nombre_completo && item.nombre_completo.toLowerCase().includes(filterText.toLowerCase()),
-  );
-
-  const subHeaderComponentMemo = useMemo(() => {
-    const handleClear = () => {
-      if (filterText) {
-        setResetPaginationToggle(!resetPaginationToggle);
-        setFilterText('');
-      }
-    };
-
-    return (
-      <FilterComponent onFilter={e => setFilterText(e.target.value)} onClear={handleClear} filterText={filterText} />
-    );
-  }, [filterText, resetPaginationToggle]);
+  
   return (
     <>
-      <div className='w-75 mx-auto mt-4'>
-        <h1 className='text-center'>Odontología</h1>
-        <Card>
-          <Card.Header>
-            Pacientes en espera
-          </Card.Header>
-          <Card.Body>
-            <DataTable
-              columns={columns}
-              data={filteredItems}
-              title={'Tabla odontologia'}
-              pagination
-              paginationComponentOptions={paginationConfig}
-              paginationResetDefaultPage={resetPaginationToggle} // optionally, a hook to reset pagination to page 1
-              subHeader
-              subHeaderComponent={subHeaderComponentMemo}
-              persistTableHead
-            />
-          </Card.Body>
-        </Card>
+      <div className='w-100 p-4'>
+        <h1 className='text-center'>Area de odontología</h1>
+        <div className="ag-theme-alpine" style={{ height: 525, width: "100%" }}>
+          <AgGridReact
+            ref={gridRef}
+            rowData={data}
+            columnDefs={columnDefs}
+            rowSelection={'single'}
+            pagination
+            paginationAutoPageSize
+            overlayLoadingTemplate={
+              '<span class="ag-overlay-loading-center">Cargando...</span>'
+            }
+            overlayNoRowsTemplate={
+              '<span class="text-center">No hay filas que mostrar</span>'
+            }
+            onGridReady={async (e) => {
+              e.api.showLoadingOverlay()
+              await loadPatientQueue()
+            }}
+            
+          >
+          </AgGridReact>
+        </div>
       </div>
     </>
   );

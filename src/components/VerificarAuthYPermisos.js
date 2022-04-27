@@ -4,13 +4,13 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { SinPermisoPage } from './SinPermisoPage';
 
 export const VerificarAuthYPermisos = ({children}) => {
-  const {isLogged,tienePermiso}=useUser();
+  const {isLogged,hasPermission}=useUser();
   const location=useLocation();
   if(!isLogged){
     return <Navigate to={"/login"} state={{from:location}} replace/>
   }
 
-  if(!tienePermiso){
+  if(!hasPermission){
     return <SinPermisoPage/>
   }
   return children;

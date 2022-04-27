@@ -8,8 +8,8 @@ ExamenService.getExamenes = async () => {
   return response.data.data
 }
 
-ExamenService.getExamenesTipoParametroYPerfil = async () => {
-  let response = await axios.get(END_POINT + "examenes?asignacion=true")
+ExamenService.getExamenesSinEstudios = async () => {
+  let response = await axios.get(END_POINT + "examenes?sinEstudios=true")
   return response.data.data
 }
 ExamenService.getExamen = async (idExamen) => {

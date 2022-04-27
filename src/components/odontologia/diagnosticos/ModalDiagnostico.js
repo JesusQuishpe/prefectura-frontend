@@ -1,51 +1,61 @@
-import OdontologiaContext from 'contexts/OdontologiaContext'
+import OdontologiaContext from 'contexts/OdontologyContext'
 import React, { useContext, useEffect, useState } from 'react'
 import { Alert, Button, Col, Form, Modal } from 'react-bootstrap'
 import Select from 'react-select'
 
 
-export const ModalDiagnostico = ({ show, closeModal,dataToEdit,agregarDiagnostico}) => {
+export const ModalDiagnostico = ({ data, closeModal, addDiagnostic, updateDiagnostic }) => {
 
-  const {cies} = useContext(OdontologiaContext)
 
-console.log(dataToEdit);
+  const { data:dataFromContext } = useContext(OdontologiaContext)
 
-  const initialForm={ tipo: "", descripcion: "", cie: "" }
+  const initialForm = { type: "", description: "", cie: null }
 
   const [form, setForm] = useState(initialForm)
 
   const [error, setError] = useState(false)
 
+  const isEdit = data.row ? true : false
+
   const handleOnChangeForm = (e) => {
-    let newForm={...form}
-    
-    if(!e.target){//Es el select
-      newForm.cie=e.label
-      setForm({ ...newForm})
-    }else{
-      setForm({ ...form, [e.target.name]: e.target.value })
-    }
-    
+    setForm({ ...form, [e.target.name]: e.target.value })
+  }
+
+  const handleOnChangeCie = (itemSelected) => {
+    //setSelectedCie({ ...itemSelected })
+    setForm({ ...form, cie: itemSelected })
   }
 
   const handleOnClickSave = (e) => {
-    if(form.tipo==="" || form.descripcion==="" || form.cie===""){
+
+    if (form.type === "" || form.description === "" || !form.cie) {
       setError(true)
-      return
+      return;
     }
-    agregarDiagnostico(form)
+    let diagnostic = { ...form }
+    if (!isEdit) {
+      addDiagnostic(diagnostic)
+    } else {
+      updateDiagnostic(diagnostic)
+    }
     setForm(initialForm)
     setError(false)
     closeModal()
   }
 
   useEffect(() => {
-    setForm(dataToEdit)
-  }, [dataToEdit])
-  
+
+    if (data.row) {
+      setForm({
+        ...data.row
+      })
+    } else {
+      setForm(initialForm)
+    }
+  }, [data])
 
   return (
-    <Modal show={show} onHide={closeModal} dialogClassName='modal-25w' size='lg'>
+    <Modal show={data.show} onHide={closeModal} dialogClassName='modal-25w' size='lg'>
       <Modal.Header closeButton>
         <Modal.Title id="exampleModalLabel">Diagnóstico</Modal.Title>
       </Modal.Header>
@@ -58,39 +68,36 @@ console.log(dataToEdit);
             Tipo:
           </Form.Label>
           <Col>
-            <Form.Select name="tipo" value={form.tipo} onChange={handleOnChangeForm}>
-              <option value="">Selecciona un tipo</option>
+            <Form.Select name="type" value={form.type} onChange={handleOnChangeForm}>
+              <option value="">Selecciona el tipo de diagnóstico</option>
               <option value="PRESUNTIVO">PRESUNTIVO</option>
               <option value="DEFINITIVO">DEFINITIVO</option>
             </Form.Select>
           </Col>
         </Form.Group>
-        <Form.Group controlId="descripcion" className='mb-4'>
+        <Form.Group controlId="description" className='mb-4'>
           <Form.Label>
             Descripción del diagnóstico:
           </Form.Label>
           <Col>
             <Form.Control
               as={'textarea'}
-              name='descripcion'
+              name='description'
               rows={3}
-              maxLength={255}
-              value={form.descripcion}
+              maxLength={300}
+              value={form.description}
               onChange={handleOnChangeForm} />
           </Col>
         </Form.Group>
         <Form.Group className='mb-4'>
           <Form.Label>
-            CIE 10:
+            Cie 10:
           </Form.Label>
           <Col>
             <Select
-              options={cies.map(cie=>({value:cie.id,label:cie.enfermedad}))}
-              placeholder="Seleccione una enfermedad segun el cie"
-              name="cie"
-              defaultInputValue={form.cie}
-              defaultValue={[cies.find(cie=>cie.enfermedad===form.cie)]}
-              onChange={handleOnChangeForm}
+              options={dataFromContext?.cies.map(cie => ({ value: cie.id, label: cie.disease }))}
+              value={form.cie}
+              onChange={handleOnChangeCie}
               styles={{
                 menu: (provided) => ({
                   ...provided,

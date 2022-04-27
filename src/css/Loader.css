@@ -11,9 +11,11 @@
     z-index: 90000;
     color: black;
 }
+
 .show{
     display: flex;
 }
+
 .modal-25w{
     min-width: 25%;
 }

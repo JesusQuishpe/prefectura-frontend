@@ -1,141 +1,173 @@
-import React, { useEffect, useMemo, useState } from 'react'
-import { Button, Card } from 'react-bootstrap'
-import { AiFillDelete, AiFillFileAdd } from 'react-icons/ai'
-import { MedicinaForm } from './MedicinaForm'
-import DataTable from 'react-data-table-component'
+import React, { useContext, useEffect, useRef, useState } from 'react'
+import { Button } from 'react-bootstrap'
 import { ModalMedicina } from './ModalMedicina'
-import axios from 'axios'
-import { END_POINT } from '../../utils/conf'
-import { FilterComponent } from 'components/FilterComponent'
+import MedicineService from 'services/MedicineService'
+import { AiFillDelete, AiFillFileAdd } from 'react-icons/ai';
+import { AgGridReact } from 'ag-grid-react';
+import 'ag-grid-community/dist/styles/ag-grid.css';
+import 'ag-grid-community/dist/styles/ag-theme-alpine.css';
+import { useDeleteModal } from 'hooks/useDeleteModal';
+import ToastContext from 'contexts/ToastContext';
+
 
 export const MedicinaEnEspera = () => {
-  const Acciones = ({ row }) => {
+  //Refs
+  const gridRef = useRef(null)
+  const initialData = [];
+  const [data, setData] = useState(initialData);
+  const [dataModal, setDataModal] = useState({});
+  const { openModal, closeModal } = useDeleteModal()
+  const { openToast } = useContext(ToastContext)
+
+  const deleteRecord = async (nurId) => {
+    try {
+      await MedicineService.deletePatientOfQueue(nurId)
+      loadPatientQueue()
+      closeModal()
+      //console.log(props);
+    } catch (error) {
+      console.log(error);
+      let message = error.response.data.message ? error.response.data.message :
+        error.response.data.exception_message
+      openToast(message, false)
+    }
+
+  }
+
+  const loadPatientQueue = async () => {
+    try {
+      gridRef.current.api.showLoadingOverlay()
+      let data = await MedicineService.getPatientQueue()
+      if (data.length === 0) {
+        gridRef.current.api.showNoRowsOverlay()
+      } else {
+        gridRef.current.api.hideOverlay()
+      }
+      console.log(data)
+      setData(data)
+    } catch (error) {
+      console.log(error);
+      gridRef.current.api.showNoRowsOverlay()
+    }
+  }
+
+  const Acciones = ({ data }) => {
+    const handleDeleteClick = () => {
+      openModal({
+        show: true,
+        id: data.nur_id,
+        message: `Nota: Al eliminar un registro , 
+        se eliminará los datos de enfermería y la cita a la que pertenece.`,
+        deleteCallback: deleteRecord
+      })
+    }
     return (
       <div className='d-flex flex-nowrap'>
-        <Button variant='primary' className='me-2' onClick={() => openModal(row)}><AiFillFileAdd /></Button>
-        <Button variant='danger'><AiFillDelete /></Button>
+        <Button variant='primary' className='me-2' onClick={() => openMedicineModal(data)}><AiFillFileAdd /></Button>
+        <Button variant='danger' onClick={handleDeleteClick}><AiFillDelete /></Button>
       </div>
     )
   }
-  //Config datatable
-  const paginationConfig = {
-    rowsPerPageText: "Filas por página",
-    rangeSeparatorText: "de",
-    selectAllRowsItem: true,
-    selectAllRowsItemText: "Todos"
-  }
-  const columns = [
+
+  const [columnDefs] = useState([
     {
-      name: "Id",
-      selector: (row) => row.id_enfermeria,
-      sortable: true
-    },
-    {
-      name: "Paciente",
-      selector: (row) => row.nombre_completo,
+      headerName: "N° cita",
+      field: "appo_id",
+      maxWidth: 150,
       sortable: true,
-      width:"300px"
+      filter: true,
+      floatingFilter: true,
+      suppressMenu: true
     },
     {
-      name: "Peso",
-      selector: (row) => row.peso+" kg",
-      sortable: true
+      headerName: "Paciente",
+      field: "fullname",
+      flex: 1,
+      sortable: true,
+      filter: true,
+      floatingFilter: true,
+      suppressMenu: true
     },
     {
-      name: "Estatura",
-      selector: (row) => row.estatura + " cm",
-      sortable: true
+      headerName: "Area",
+      field: "area",
+      flex: 1,
+      sortable: true,
+      filter: true,
+      floatingFilter: true,
+      suppressMenu: true
     },
     {
-      name: "Temperatura",
-      selector: (row) => row.temperatura +" °C",
-      sortable: true
+      headerName: "Fecha de cita",
+      field: "date",
+      flex: 1,
+      sortable: true,
+      filter: true,
+      floatingFilter: true,
+      suppressMenu: true
     },
     {
-      name: "Acciones",
-      cell: (row) => <Acciones row={row} />,
-      ignoreRowClick: true,
+      headerName: "Hora de cita",
+      field: "hour",
+      flex: 1,
+      sortable: true,
+      filter: true,
+      floatingFilter: true,
+      suppressMenu: true
+    },
+    {
+      headerName: "Acciones",
+      cellRenderer: Acciones,
+      /*cellRendererParams: {
+        loadPatientQueue,
+        openModalConfirmation
+      }*/
     }
-  ];
+  ]);
 
-  const initialData = [];
-  //States
-
-  const [data, setData] = useState(initialData);
-  const [showModal, setShowModal] = useState(false);
-  const [rowData, setRowData] = useState(null);
-
-  //Functions
-  const enEspera = async () => {
-    let response = await axios.get(END_POINT + "medicina");
-    console.log(response);
-    setData(response.data.data);
+  const openMedicineModal = (data) => {
+    setDataModal({
+      show: true,
+      data
+    })
   };
-  const openModal = (row) => {
-    setRowData(row);
-    setShowModal(true);
-  };
-  const closeModal = () => {
-    setShowModal(false);
+
+  const closeMedicineModal = () => {
+    setDataModal({
+      show: false,
+      data: null
+    })
   }
-
-  //Configuracion para filtrar en DataTable
-  const [filterText, setFilterText] = useState('');
-  const [resetPaginationToggle, setResetPaginationToggle] = useState(false);
-  const filteredItems = data.filter(
-    item => item.nombre_completo && item.nombre_completo.toLowerCase().includes(filterText.toLowerCase()),
-  );
-
-  const subHeaderComponentMemo = useMemo(() => {
-    const handleClear = () => {
-      if (filterText) {
-        setResetPaginationToggle(!resetPaginationToggle);
-        setFilterText('');
-      }
-    };
-
-    return (
-      <FilterComponent onFilter={e => setFilterText(e.target.value)} onClear={handleClear} filterText={filterText} />
-    );
-  }, [filterText, resetPaginationToggle]);
-
-  //Use Effects
-  useEffect(() => {
-    enEspera();
-  }, [])
 
   return (
     <>
-      <div className='w-75 mx-auto mt-4'>
-        <h1 className='text-center'>Medicina</h1>
-        <Card>
-          <Card.Header>
-            Pacientes en espera
-          </Card.Header>
-          <Card.Body>
-            <DataTable
-              columns={columns}
-              data={filteredItems}
-              title={'Pacientes en espera'}
-              pagination
-              paginationComponentOptions={paginationConfig}
-              paginationResetDefaultPage={resetPaginationToggle} // optionally, a hook to reset pagination to page 1
-              subHeader
-              subHeaderComponent={subHeaderComponentMemo}
-              persistTableHead
-            />
-          </Card.Body>
-        </Card>
+      <div className='w-100 p-4'>
+        <h1 className='text-center'>Area de medicina</h1>
+        <div className="ag-theme-alpine" style={{ height: 450, width: "100%" }}>
+          <AgGridReact
+            ref={gridRef}
+            rowData={data}
+            columnDefs={columnDefs}
+            rowSelection={'single'}
+            pagination
+            overlayLoadingTemplate={
+              '<span class="ag-overlay-loading-center">Cargando...</span>'
+            }
+            overlayNoRowsTemplate={
+              '<span class="text-center">No hay filas que mostrar</span>'
+            }
+            onGridReady={async (e) => {
+              await loadPatientQueue()
+            }}
+          >
+          </AgGridReact>
+        </div>
       </div>
       <ModalMedicina
-        show={showModal}
-        closeModal={closeModal}
-        row={rowData}
-        actualizarPacientes={enEspera}
-        isEdit={false}
+        parameters={dataModal}
+        closeModal={closeMedicineModal}
+        loadPatientQueue={loadPatientQueue}
       />
     </>
-
-
   )
 };

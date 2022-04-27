@@ -1,49 +1,38 @@
 import React from 'react';
-import {DienteLingual} from './DienteLingual';
-import DienteVestibular from './DienteVestibular';
+import Diente from './Diente';
 
-export const Cuadrante = ({ cuadrante, dientes, tipo, reverse }) => {
-  if (tipo === "Vestibular") {
-    return (
-      <div id={`cuadrante-${cuadrante}`} className='cuadrante'>
-        {
-          dientes.map((diente) => {
+
+const Cuadrante = ({ quadrant, teeth, reverse, details, OnToothClick }) => {
+  return (
+    <div id={`cuadrante-${quadrant}`} className='cuadrante'>
+      {
+        teeth.map((tooth, index) => {
+          let toothFinded=details.find(toothDetail=>toothDetail.tooth_id===tooth.id)
+          if ((quadrant === 5 || quadrant === 8) && index === 0) {
             return (
-              <DienteVestibular
-                key={diente.id}
-                diente={diente}
-                reverse={reverse}
-              />
+              <div style={{ gridColumnStart: 4 }} key={tooth.id}>
+                <Diente
+                  key={tooth.id}
+                  tooth={tooth}
+                  toothDetail={toothFinded}
+                  reverse={reverse}
+                  onClick={OnToothClick}
+                />
+              </div>
             )
-          })
-        }
-      </div>
-    );
-  } else {
-    return (
-      <div id={`cuadrante-${cuadrante}`} className='cuadrante'>
-        {
-          dientes.map((diente, index) => {
-            if ((cuadrante === 5 || cuadrante === 8) && index === 0) {
-              return (
-                <div style={{ gridColumnStart: 4 }} key={diente.id}>
-                  <DienteLingual
-                    diente={diente}
-                    reverse={reverse}
-                  />
-                </div>
-              )
-            }
-            return (
-              <DienteLingual
-                key={diente.id}
-                diente={diente}
-                reverse={reverse}
-              />
-            )
-          })
-        }
-      </div>
-    );
-  }
+          }
+          return (
+            <Diente
+              key={tooth.id}
+              tooth={tooth}
+              toothDetail={toothFinded}
+              reverse={reverse}
+              onClick={OnToothClick}
+            />
+          )
+        })
+      }
+    </div>
+  )
 };
+export default React.memo(Cuadrante)

@@ -1,21 +1,26 @@
 import axios from 'axios';
+import LoaderContext from 'contexts/LoaderContext';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import React, { useContext, useEffect, useState } from 'react';
 import { Button, Form as FormReact } from 'react-bootstrap';
 import { useParams } from 'react-router-dom';
+import { UserService } from 'services/UserService';
 import * as Yup from 'yup';
 import ToastContext from '../../contexts/ToastContext';
 import { END_POINT } from '../../utils/conf';
 
 export const UserForm = () => {
-  const { idUsuario } = useParams();
-  const isEdit = idUsuario ? true : false;
+  const { idUser } = useParams();
+  const isEdit = idUser ? true : false;
   const { openToast } = useContext(ToastContext);
+  const {openLoader,closeLoader} = useContext(LoaderContext)
 
   const initialForm = {
     name: "",
     email: "",
     password: "",
+    old_password: "",
+    isOldPassword: isEdit ? true : false,
     rol: ""
   }
   const [form, setForm] = useState(initialForm);
@@ -27,38 +32,16 @@ export const UserForm = () => {
     setRoles(response.data.data);
   }
 
-  const crearUsuario = async (usuario) => {
-    try {
-      let response = await axios.post(END_POINT + "users", usuario);
-      openToast("Registro creado", true);
-    } catch (error) {
-      openToast("No se pudo crear el registro", false);
-      console.log(error);
-    }
-
-  }
-
-  const actualizarUsuario = async (usuario) => {
-    try {
-      await axios.put(END_POINT + `users/${idUsuario}`, usuario);
-      openToast("Registro actualizado", true);
-    } catch (error) {
-      openToast("No se pudo actualizar el registro", false);
-      console.log(error);
-    }
-
-  }
-
-  const getUsuarioById = async (id) => {
+  const getUserById = async (id) => {
     let response = await axios.get(END_POINT + `users/${id}`);
-    let { name, email, id_rol } = response.data.data;
+    let { name, email, rol_id } = response.data.data;
     console.log(name, email);
-    setForm({ ...form, name, email, rol: id_rol });
+    setForm({ ...form, name, email, rol: rol_id });
   }
 
   useEffect(() => {
     if (isEdit) {
-      getUsuarioById(idUsuario);
+      getUserById(idUser);
     }
     getRoles();
   }, []);
@@ -77,51 +60,84 @@ export const UserForm = () => {
             Yup.object({
               name: Yup.string().required('El campo es requerido'),
               email: Yup.string().required('El campo es requerido').email('Debe ser un email válido'),
+              old_password: Yup.string().when('isOldPassword', {
+                is: true,
+                then: Yup.string()
+                  .required('El campo es obligatorio'),
+                otherwise: Yup.string(),
+              }),
               password: Yup.string().required('El campo es requerido'),
               rol: Yup.string().required('El campo es requerido'),
             })
           }
 
-          onSubmit={async (valores, { resetForm }) => {
-            console.log(valores);
-            if (!isEdit) {
-              await crearUsuario(valores);
-            } else {
-              await actualizarUsuario(valores);
+          onSubmit={async (values, { resetForm }) => {
+            try {
+              console.log(values);
+              if (!isEdit) {
+                openLoader("Creando usuario...")
+                await UserService.createUser(values)
+                openToast("Usuario creado correctamente",true)
+                resetForm({ values: initialForm });
+              } else {
+                openLoader("Actualizando usuario...")
+                await UserService.updateUser({ ...values, id: idUser })
+                openToast("Usuario actualizado correctamente",true)
+              }
+              closeLoader()
+            } catch (error) {
+              console.log(error);
+              closeLoader()
+              let message = error.response.data.message ? "El nombre de usuario o email ya existen" :
+                error.response.data.exception_message
+              openToast(message, false)
             }
-            resetForm({ values: initialForm });
+
           }}
 
         >
           {
             ({ errors, touched }) => (
               <Form id='form-newuser'>
-                <FormReact.Group>
+                <FormReact.Group className='mb-3'>
                   <FormReact.Label>Nombre de usuario</FormReact.Label>
-                  <Field name="name" className={`form-control ${touched.name && errors.name && 'error'}`} type="text" />
+                  <Field name="name" maxLength={50} className={`form-control ${touched.name && errors.name && 'error'}`} type="text" />
                   <ErrorMessage name='name' component={() => (<FormReact.Text className="text-danger">{errors.name}</FormReact.Text>)} />
                 </FormReact.Group>
-                <FormReact.Group>
+                <FormReact.Group className='mb-3'>
                   <FormReact.Label>Correo electrónico</FormReact.Label>
                   <Field name="email" className={`form-control ${touched.email && errors.email && 'error'}`} type="text" />
                   <ErrorMessage name='email' component={() => (<FormReact.Text className="text-danger">{errors.email}</FormReact.Text>)} />
                 </FormReact.Group>
                 {
-                  !isEdit && (<FormReact.Group>
-                    <FormReact.Label>Contraseña</FormReact.Label>
-                    <Field type="password" name="password" className={`form-control ${touched.password && errors.password && 'error'}`}/>
-                    <ErrorMessage name='password' component={() => (<FormReact.Text className="text-danger">{errors.password}</FormReact.Text>)} />
-                  </FormReact.Group>)
+                  isEdit && <FormReact.Group className='mb-3'>
+                    <FormReact.Label>Contraseña actual</FormReact.Label>
+                    <Field
+                      type="password"
+                      name="old_password"
+                      autoComplete="false"
+                      className={`form-control ${touched.old_password && errors.old_password && 'error'}`} />
+                    <ErrorMessage name='old_password' component={() => (<FormReact.Text className="text-danger">{errors.old_password}</FormReact.Text>)} />
+                  </FormReact.Group>
                 }
+                <FormReact.Group className='mb-3'>
+                  <FormReact.Label>{isEdit ? "Contraseña nueva" : "Contraseña"}</FormReact.Label>
+                  <Field
+                    type="password"
+                    name="password"
+                    autoComplete="false"
+                    className={`form-control ${touched.password && errors.password && 'error'}`} />
+                  <ErrorMessage name='password' component={() => (<FormReact.Text className="text-danger">{errors.password}</FormReact.Text>)} />
+                </FormReact.Group>
 
-                <FormReact.Group>
+                <FormReact.Group className='mb-3'>
                   <FormReact.Label>Rol:</FormReact.Label>
-                  <Field  name="rol" as="select" className={`form-select ${touched.rol && errors.rol && 'error'}`}>
-                    <option value="">Selecciona un doctor</option>
+                  <Field name="rol" as="select" className={`form-select ${touched.rol && errors.rol && 'error'}`}>
+                    <option value="">Selecciona un rol</option>
                     {
                       roles ? roles.map((rol) => {
                         return (
-                          <option key={rol.id} value={rol.id}>{rol.nombre}</option>
+                          <option key={rol.id} value={rol.id}>{rol.name}</option>
                         )
                       })
                         : "No se pudo cargar los roles"

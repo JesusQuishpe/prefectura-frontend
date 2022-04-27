@@ -1,6 +1,39 @@
 textarea {
   resize: none;
 }
+/*Tabpane*/
+/*.tab-content>.tab-pane{
+  opacity: 0;
+  visibility: hidden;
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+.tab-content>.active{
+  opacity: 1;
+  visibility: visible;
+  display: block;
+  position: relative;
+  top: 0;
+  left: 0;
+}
+.tab-pane{
+  opacity: 0;
+  visibility: hidden;
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+.tab-pane.active{
+  opacity: 1;
+  visibility: visible;
+  display: block;
+  position: relative;
+  top: 0;
+  left: 0;
+}*/
 
 /*Indicadores*/
 .tb-piezas {
@@ -78,7 +111,7 @@ textarea {
 }
 
 /*Tabla diagnosticos*/ 
-#tb-diag {
+.tb-odontologia {
   border-collapse: collapse;
   border: 1px solid #ccc;
   width: 100%;
@@ -86,42 +119,42 @@ textarea {
   min-width: 600px;
 }
 
-#tb-diag thead {
+.tb-odontologia thead {
   background-color: #75a478;
   color: whitesmoke;
 }
-#tb-diag th {
+.tb-odontologia th {
   padding: 10px;
   font-weight: 500;
   
 }
-#tb-diag th:first-child {
+.tb-odontologia th:first-child {
   width: 50%;
 }
-#tb-diag .text {
+.tb-odontologia .text {
   width: 100%;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
 }
 
-#tb-diag td {
+.tb-odontologia td {
   padding: 10px;
   border-right: 1px solid #ccc;
 }
 
-#tb-diag td:nth-last-child(-n + 2) {
+.tb-odontologia td:nth-last-child(-n + 2) {
   text-align: center;
 }
 
-#tb-diag tbody tr {
+.tb-odontologia tbody tr {
   cursor: pointer;
 }
-#tb-diag tbody tr:hover {
+.tb-odontologia tbody tr:hover {
   background-color: #ddd;
 }
 
-#tb-diag tbody tr.selected {
+.tb-odontologia tbody tr.selected {
   background-color: lightblue;
 }
 
@@ -132,8 +165,8 @@ textarea {
   top: 56px;
   left: 0;
   height: 100%;
-  width: 300px;
-  min-width: 300px;
+  width: 320px;
+  min-width: 320px;
   -webkit-box-shadow: 4px 4px 15px 5px #ccc;
           box-shadow: 4px 4px 15px 5px #ccc;
 }
@@ -145,8 +178,8 @@ textarea {
 .ficha-content{
   position: absolute;
   top: 0px;
-  left: 300px;
-  width: calc(100% - 300px);
+  left: 320px;
+  width: calc(100% - 320px);
   height: calc(100vh - 56px);
   display: flex;
   flex-direction: column;
@@ -179,6 +212,7 @@ textarea {
   width: 30px;
   height: 30px;
   z-index: 50;
+  position: relative;
 }
 .btn-diente {
   fill: white;
@@ -192,9 +226,11 @@ textarea {
 }
 
 .btn-diente.color-blue {
-  background-color: blue;
+  fill: blue;
 }
-
+.btn-diente.color-red {
+  fill: red;
+}
 /*Estilos simbologias paleta*/
 .paleta-container{
   padding: 20px 0px;
@@ -204,7 +240,7 @@ textarea {
 .colores{
   width: 150px;
 }
-.color-blue {
+.paleta-red {
   height: 20px;
   width: 80px;
   background-color: #dc3545;
@@ -212,23 +248,25 @@ textarea {
   margin-right: 5px;
 }
 
-.color-blue.selected {
+.paleta-red.selected {
   border: 2px solid #000;
 }
-.color-red {
+.paleta-blue {
   
   background-color: #0d6efd;
   height: 20px;
   width: 80px;
   cursor: pointer;
+  margin-right: 5px;
 }
 
-.color-red.selected {
+.paleta-blue.selected {
   border: 2px solid #000;
 }
 
 .simbologias{
   width: 100%;
+  margin-right: 20px;
 }
 .simbologias-container {
   width: 100%;
@@ -249,6 +287,7 @@ textarea {
 
 .simbolo {
   cursor: pointer;
+  padding: 5px 7px;
 }
 
 .simbolo.selected {
@@ -266,6 +305,8 @@ textarea {
   grid-template-columns: 100px 1fr 1fr;
   row-gap: 8px;
   column-gap: 8px;
+  width: 100%;
+  height: 100%;
 }
 
 .cuadrante{
@@ -277,4 +318,66 @@ textarea {
 
 .cuadrante-item{
   width: 30px;
+}
+
+.option-selected{
+  border: 1.7px solid #000;
+}
+
+.btn-limpiar{
+  cursor: pointer;
+}
+
+.acta-dropzone{
+  border: 2px dashed #ccc;
+  position: relative;
+  width: 100%;
+  height: 300px;
+  padding: 20px;
+}
+.acta-dropzone.dragActive{
+  border: 2px dashed #75a478;
+}
+
+.acta-info{
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%,-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.acta-file{
+  width:120px;
+  height: 140px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 1px 1px 2px 1px rgba(0, 0, 0, 0.2);
+  border-radius: 5px;
+  padding: 10px 0px;
+  background-color: #f6f6f8;
+  padding: 0px 8px;
+}
+
+.acta-thumb{
+  flex: 1;
+  width: 100%;
+  height: 100px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.thumb-text{
+  font-size: 10px;
+  font-weight: 400;
+  text-align: center;
+  max-height: 45px;
+  overflow: hidden;
+  min-height: 30px;
+}
+.thumb-text.overflow{
+  text-overflow: ellipsis;
 }

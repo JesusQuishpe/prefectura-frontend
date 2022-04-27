@@ -22,3 +22,8 @@ MedidaService.actualizarMedida=async(medida)=>{
   let response=await axios.put(END_POINT+`unidades/${medida.id}`,medida)
   return response.data
 }
+
+MedidaService.eliminarMedida=async(id)=>{
+  let response=await axios.delete(END_POINT+`unidades/${id}`)
+  return response.data
+}

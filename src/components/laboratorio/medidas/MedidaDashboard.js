@@ -1,66 +1,113 @@
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
 import MedidaService from 'services/MedidaService';
-import { Button } from 'react-bootstrap';
+import { Button, Modal } from 'react-bootstrap';
 import DataTable from 'react-data-table-component';
 import { AiFillDelete, AiFillEdit, AiFillFileAdd } from 'react-icons/ai';
 import { Link, useNavigate } from 'react-router-dom';
+import { AgGridReact } from 'ag-grid-react';
+import 'ag-grid-community/dist/styles/ag-grid.css';
+import 'ag-grid-community/dist/styles/ag-theme-alpine.css';
+import ToastContext from 'contexts/ToastContext';
+import { useDeleteModal } from 'hooks/useDeleteModal';
+
 
 export const MedidaDashboard = () => {
   const [medidas, setMedidas] = useState([])
+  const gridRef = useRef(null)
   const navigate = useNavigate();
-  
-  const Acciones = ({ row }) => {
+  const { openModal, closeModal } = useDeleteModal()
+  const { openToast } = useContext(ToastContext)
+
+  const deleteRecord = async (id) => {
+    try {
+      let response = await MedidaService.eliminarMedida(id)
+      getMedidas()
+      closeModal()
+      //console.log(props);
+    } catch (error) {
+      console.log(error);
+      let message = error.response.data.message ? error.response.data.message :
+        error.response.data.exception_message
+      openToast(message, false)
+    }
+  }
+
+  const Acciones = ({ data }) => {
     const editarClick = () => {
-      navigate(`editar/${row.id}`);
+      navigate(`editar/${data.id}`);
+    }
+    const deleteClick = () => {
+      openModal({
+        show: true,
+        id: data.id,
+        message: `Nota: Solo se podrán eliminar 
+        unidades de medida que no tengan relación con algún registro.`,
+        deleteCallback: deleteRecord
+      })
     }
     return (
       <div className='d-flex flex-nowrap'>
         <Button variant='primary' className='me-2' onClick={editarClick}><AiFillEdit /></Button>
-        <Button variant='danger'><AiFillDelete /></Button>
+        <Button variant='danger' onClick={deleteClick}><AiFillDelete /></Button>
       </div>
     )
   }
 
-  //Config datatable
-  const paginationConfig = {
-    rowsPerPageText: "Filas por página",
-    rangeSeparatorText: "de",
-    selectAllRowsItem: true,
-    selectAllRowsItemText: "Todos"
-  }
-
-  const columns = [
-    {
-      name: "Id",
-      selector: (row) => row.id,
-      sortable: true
-    },
-    {
-      name: "Nombre",
-      selector: (row) => row.nombre,
-      sortable: true
-    },
-    {
-      name: "Abreviatura",
-      selector: (row) => row.abreviatura,
-      sortable: true
-    },
-    {
-      name: "Acciones",
-      cell: (row) => <Acciones row={row} />,
-      ignoreRowClick: true,
-    }
-  ];
-
-
   const getMedidas = async () => {
-    let medidasFromService = await MedidaService.getMedidas()
-    setMedidas(medidasFromService)
+    try {
+      gridRef.current.api.showLoadingOverlay()
+      let medidasFromService = await MedidaService.getMedidas()
+      if (medidasFromService.length === 0) {
+        gridRef.current.api.showNoRowsOverlay()
+      } else {
+        gridRef.current.api.hideOverlay()
+      }
+      console.log(medidasFromService);
+      setMedidas(medidasFromService)
+    } catch (error) {
+      gridRef.current.api.showNoRowsOverlay()
+      console.log(error);
+    }
   }
 
-  useEffect(() => {
-    getMedidas()
-  }, []);
+  const [columnDefs] = useState([
+    {
+      headerName: "Id",
+      field: "id",
+      maxWidth: 150,
+      sortable: true,
+      filter: true,
+      floatingFilter: true,
+      suppressMenu: true
+    },
+    {
+      headerName: "Nombre",
+      field: "name",
+      flex: 1,
+      sortable: true,
+      filter: true,
+      floatingFilter: true,
+      suppressMenu: true
+    },
+    {
+      headerName: "Abreviatura",
+      field: "abbreviation",
+      flex: 1,
+      sortable: true,
+      filter: true,
+      floatingFilter: true,
+      suppressMenu: true
+    },
+    {
+      headerName: "Acciones",
+      cellRenderer: Acciones,
+      /*cellRendererParams: {
+        getMedidas
+      }*/
+    }
+  ]);
+
+  
 
   return (
     <>
@@ -69,14 +116,24 @@ export const MedidaDashboard = () => {
         <div className='mb-4'>
           <Link className='btn btn-success' to={"nuevo"}><AiFillFileAdd />Nuevo</Link>
         </div>
-        <div>
-          <DataTable
-            columns={columns}
-            data={medidas}
-            title={'Tabla medidas'}
+        <div className="ag-theme-alpine" style={{ height: 450, width: "100%" }}>
+          <AgGridReact
+            ref={gridRef}
+            rowData={medidas}
+            columnDefs={columnDefs}
+            rowSelection={'single'}
             pagination
-            paginationComponentOptions={paginationConfig}
-          />
+            overlayLoadingTemplate={
+              '<span class="ag-overlay-loading-center">Cargando...</span>'
+            }
+            overlayNoRowsTemplate={
+              '<span class="text-center">No hay filas que mostrar</span>'
+            }
+            onGridReady={() => {
+              getMedidas()
+            }}
+          >
+          </AgGridReact>
         </div>
       </div>
     </>
