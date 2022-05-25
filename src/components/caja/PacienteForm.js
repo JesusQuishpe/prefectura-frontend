@@ -1,18 +1,17 @@
-import axios from 'axios';
-import MyToast from 'components/MyToast';
 import LoaderContext from 'contexts/LoaderContext';
 import ToastContext from 'contexts/ToastContext';
 import React, { useState, useContext, useEffect } from 'react'
-import { Button, Col, Container, Form, Row} from 'react-bootstrap'
+import { Button, Col, Container, Form, Row } from 'react-bootstrap'
 import { useParams } from 'react-router-dom';
 import PatientService from 'services/PatientService';
 
 
 export const PacienteForm = () => {
-  const { idPatient } = useParams();
-  const isEdit = idPatient ? true : false;
+  //Contexts
   const { openToast } = useContext(ToastContext)
   const { openLoader, closeLoader } = useContext(LoaderContext)
+  //Other hooks
+  const { idPatient } = useParams();
   //States
   const initialForm = {
     identification_number: "",
@@ -25,12 +24,14 @@ export const PacienteForm = () => {
     province: "",
     city: "",
   }
-
-  //Estado para el formulario
   const [form, setForm] = useState(initialForm);
+  
+  const isEdit = idPatient ? true : false;
 
-  //Estado para la busqueda de pacientes
-
+  /**
+   * Handler para el formulario
+   * @param {Event} e 
+   */
   const handleForm = (e) => {
     const { name, value } = e.target;
     setForm({
@@ -39,12 +40,17 @@ export const PacienteForm = () => {
     });
   };
 
+  /**
+   * Handler para guardar el paciente
+   * @param {Event} e 
+   * @returns 
+   */
   const handleSubmit = async (e) => {
     try {
+      e.preventDefault()
       if (!form.identification_number || !form.name || !form.lastname || !form.gender) {
         return alert("Debe completar los campos obligatorios")
       }
-      
       if (!isEdit) {
         openLoader("Creando paciente...")
         await PatientService.createPatient(form)
@@ -62,14 +68,18 @@ export const PacienteForm = () => {
     }
   };
 
-  const getPatientById = async (id) => {
+  /**
+   * Carga el paciente por id
+   * @param {number} id 
+   */
+  const loadPatientById = async (id) => {
     let patient = await PatientService.getPatient(id);
     setForm({ ...patient });
   }
 
   useEffect(() => {
     if (isEdit) {
-      getPatientById(idPatient);
+      loadPatientById(idPatient);
     }
   }, []);
 
@@ -77,7 +87,7 @@ export const PacienteForm = () => {
     <div className='pt-4'>
       <Container className='w-50 mx-auto'>
         <h3 className='my-3 text-center mb-4'>{isEdit ? "ACTUALIZAR PACIENTE" : "NUEVO PACIENTE"}</h3>
-        <Form>
+        <Form onSubmit={handleSubmit}>
           <Form.Group as={Row} className="mb-3" controlId="identification_number">
             <Form.Label column sm={4} className='text-start'>
               Cédula <span className='text-danger'>*</span> :
@@ -223,9 +233,12 @@ export const PacienteForm = () => {
             </Col>
           </Form.Group>
 
-          <Form.Group as={Row} className="mb-3 justify-content-center" controlId="acciones">
-            <Button variant='primary' as={Col} sm={2} onClick={handleSubmit}>{isEdit ? "Actualizar" : 'Guardar'}</Button>
-          </Form.Group>
+          <Button
+            type='submit'
+            variant='primary'
+            className='float-end'>
+            {isEdit ? "Actualizar" : 'Guardar'}
+          </Button>
         </Form>
       </Container>
 

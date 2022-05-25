@@ -1,17 +1,14 @@
-import axios from 'axios';
 import React, { useContext, useEffect, useRef, useState } from 'react';
 import { Button } from 'react-bootstrap';
-import DataTable from 'react-data-table-component';
 import { AiFillDelete, AiFillEdit, AiFillFileAdd } from 'react-icons/ai';
 import { Link, useNavigate } from 'react-router-dom';
-import { END_POINT } from '../../utils/conf';
 import { AgGridReact } from 'ag-grid-react';
 import 'ag-grid-community/dist/styles/ag-grid.css';
 import 'ag-grid-community/dist/styles/ag-theme-alpine.css';
-import { formatNumber } from 'utils/utilidades';
 import { useDeleteModal } from 'hooks/useDeleteModal';
 import { UserService } from 'services/UserService';
 import ToastContext from 'contexts/ToastContext';
+
 
 export const DashboardUsers = () => {
   const gridRef = useRef(null)
@@ -118,7 +115,7 @@ export const DashboardUsers = () => {
 
   return (
     <>
-      <div className='w-75 mx-auto mt-4'>
+      <div className='w-100 p-4'>
         <h2 className='mb-4'>Usuarios</h2>
         <div className='mb-4'>
           <Link className='btn btn-success' to={"nuevo"}><AiFillFileAdd /> Nuevo</Link>

@@ -7,15 +7,13 @@ import LoaderContext from 'contexts/LoaderContext';
 import ToastContext from 'contexts/ToastContext';
 
 export const MedicinaForm = ({ data, loadPatientQueue, closeModal }) => {
-
-  const { user } = useUser()
+  //Contexts
   const { openLoader, closeLoader } = useContext(LoaderContext)
   const { openToast } = useContext(ToastContext)
-
+  //Other hooks
+  const { user } = useUser()
   const { medicineId } = useParams()
-
-  const isEdit = medicineId ? true : false
-
+  //States
   const initialForm = {
     id: '',
     appo_id: '',
@@ -62,9 +60,13 @@ export const MedicinaForm = ({ data, loadPatientQueue, closeModal }) => {
     dosage5: '',
     dosage6: '',
   }
-
   const [form, setForm] = useState(initialForm)
 
+  const isEdit = medicineId ? true : false
+
+  /**
+   * Carga la ficha tecnica de medicina dado su id
+   */
   const loadRecordData = async () => {
     let data = await MedicineService.getMedicineRecord(medicineId)
     let nursing_area = data.nursing_area
@@ -118,6 +120,10 @@ export const MedicinaForm = ({ data, loadPatientQueue, closeModal }) => {
     })
   }
 
+  /**
+   * Carga el registro de enfermeria dado su id
+   * @param {number} nurId 
+   */
   const loadDataFromNursingArea = async (nurId) => {
 
     let data = await MedicineService.getDataOfNursingArea(nurId)
@@ -156,10 +162,13 @@ export const MedicinaForm = ({ data, loadPatientQueue, closeModal }) => {
     }
   }, [data])
 
+  /**
+   * Crea o actualiza la ficha tecnica de medicina
+   * @param {Event} e 
+   */
   const handleSubmit = async (e) => {
     try {
       e.preventDefault()
-
       if (isEdit) {
         openLoader("Actualizando datos...")
         await MedicineService.updateMedicineRecord({ ...form, user_id: user.id, medicine_id: medicineId })

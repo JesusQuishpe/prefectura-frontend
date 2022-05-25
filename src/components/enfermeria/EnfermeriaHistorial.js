@@ -1,16 +1,13 @@
 import React, { useRef, useState } from 'react'
-import {  Button, Col, Form, FormControl, InputGroup, Row } from 'react-bootstrap'
+import { Button, Col, Form, FormControl, InputGroup, Row } from 'react-bootstrap'
 import { AgGridReact } from 'ag-grid-react';
 import 'ag-grid-community/dist/styles/ag-grid.css';
 import 'ag-grid-community/dist/styles/ag-theme-alpine.css';
-import CapturaService from 'services/CapturaService';
-import { formatNumber } from 'utils/utilidades';
-import { AiFillEdit } from 'react-icons/ai'
-import { useNavigate } from 'react-router-dom';
-import PDFIcon from 'assets/svg/pdf.svg'
-import { END_POINT } from 'utils/conf';
+import { AiFillEdit, AiFillDelete } from 'react-icons/ai'
+import EnfermeriaService from 'services/EnfermeriaService';
+import { useDeleteModal } from 'hooks/useDeleteModal';
+import { ModalEnfermeria } from './ModalEnfermeria';
 
-//Parametros para poder filtrar por fecha en el ag-grid
 var filterParams = {
   comparator: function (filterLocalDateAtMidnight, cellValue) {
     var dateAsString = cellValue;
@@ -32,40 +29,83 @@ var filterParams = {
     }
   },
   browserDatePicker: true,
-}
+};
 
-const Acciones = (props) => {
-  const navigate = useNavigate()
-  /**
-   * Navega a un formulario para editar los resultados de la prueba
-   * @param {number} idCaptura 
-   */
-  const handleClick = (idCaptura) => {
-    navigate(`${idCaptura}`)
+const Acciones = ({ data, deleteRecord, openDeleteModal, openModal }) => {
+
+  const handleDeleteClick = () => {
+    openDeleteModal({
+      show: true,
+      id: data.appo_id,
+      message: `Nota: Al eliminar un registro , 
+      se eliminará la cita a la que pertenece.`,
+      deleteCallback: deleteRecord
+    })
   }
 
   return (
     <div className='d-flex justify-content-around'>
-      <Button onClick={() => handleClick(props.data.result_id)}><AiFillEdit /></Button>
-      <a
-        className='btn btn-danger'
-        href={END_POINT + `resultado/${props.data.order_id}/pdf`}
-        target='_blank'
-      ><img src={PDFIcon} width="20px" height={"20px"} /></a>
+      <Button onClick={() => openModal(data)}><AiFillEdit /></Button>
+      <Button variant='danger' onClick={handleDeleteClick}><AiFillDelete /></Button>
     </div>
   )
 }
 
-export const ConsultarResultados = () => {
+export const EnfermeriaHistorial = () => {
   //Refs
   const queryRef = useRef()
   const resultadosRef = useRef(null)
   //States
+  const [parametersModal, setParametersModal] = useState({});
   const [resultados, setResultados] = useState([])
+  //Custom hooks
+  const { openModal: openDeleteModal, closeModal: closeDeleteModal } = useDeleteModal()
+
+  /**
+   * Elimina un registro de enfermeria
+   * @param {number} appoId 
+   */
+  const deleteRecord = async (appoId) => {
+    try {
+      //await axios.delete(END_POINT + `enfermerias/${appoId}`)
+
+      // loadPatientQueue()
+      closeDeleteModal()
+      //console.log(props);
+    } catch (error) {
+      console.log(error);
+      let message = error.response.data.message ?
+        error.response.data.message :
+        error.response.data.exception_message
+      // openToast(message, false)
+    }
+  }
+  /**
+    * Muestra el modal  para agregar los datos de enfermeria
+    * @param {object} data 
+  */
+  const openModal = (data) => {
+    setParametersModal({
+      show: true,
+      data
+    })
+  };
+
+  /**
+    * Cierra el modal de enfermeria
+    */
+  const closeModal = () => {
+    setParametersModal({
+      show: false,
+      data: null
+    })
+  }
+
+  //Coldefs to ag-grid
   const [resultadosColumnDefs] = useState([
     {
-      headerName: "N° orden",
-      field: "order_id",
+      headerName: "N° cita",
+      field: "appo_id",
       maxWidth: 200,
       sortable: true,
       filter: true,
@@ -75,41 +115,43 @@ export const ConsultarResultados = () => {
     {
       headerName: "Fecha",
       field: "date",
-      flex: 1,
+      maxWidth: 250,
       sortable: true,
       filter: 'agDateColumnFilter',
       filterParams: filterParams,
       floatingFilter: true,
       suppressMenu: true
     },
-    { headerName: "Hora", field: "hour", sortable: true },
-    { headerName: "N° pruebas", field: "test_items", sortable: true },
+    { headerName: "Hora", maxWidth: 250, field: "hour", sortable: true },
     {
-      headerName: "Total",
-      field: "total",
-      maxWidth: 100,
-      valueFormatter: (params) => {
-        return formatNumber(params.value)
-      }
+      headerName: "Doctor",
+      field: "doctor",
+      flex: 1,
     },
     {
       headerName: "Acciones",
       maxWidth: 150,
       cellRenderer: Acciones,
+      cellRendererParams: {
+        deleteRecord,
+        openDeleteModal,
+        openModal
+      }
     }
   ])
 
+
   /**
-   * Carga los resultados del paciente por numero de cedula
-   * @param {string} cedula número de cedula del paciente
+   * Carga los resultados del paciente por cedula
+   * @param {string} cedula 
    */
   const cargarResultados = async (cedula) => {
     try {
       resultadosRef.current.api.showLoadingOverlay()
-      let resultados = await CapturaService.getResultadosPorCedula(cedula)
-      if(resultados.length===0){
+      let resultados = await EnfermeriaService.getRecordsByIdentification(cedula)
+      if (resultados.length === 0) {
         resultadosRef.current.api.showNoRowsOverlay()
-      }else{
+      } else {
         resultadosRef.current.api.hideOverlay()
       }
       setResultados(resultados)
@@ -120,7 +162,7 @@ export const ConsultarResultados = () => {
   }
 
   /**
-   * Handler para buscar resultados por numero de cedula del paciente
+   * Handler para buscar los resultados del paciente por cedula
    * @param {Event} e 
    */
   const handleSubmitSearch = async (e) => {
@@ -150,7 +192,7 @@ export const ConsultarResultados = () => {
           </Form>
         </Col>
       </Row>
-      
+
       <div className="ag-theme-alpine" style={{ height: 500, width: "100%" }}>
 
         <AgGridReact
@@ -168,6 +210,10 @@ export const ConsultarResultados = () => {
         >
         </AgGridReact>
       </div>
+      <ModalEnfermeria
+        closeModal={closeModal}
+        parameters={parametersModal}
+      />
     </div>
   )
 }

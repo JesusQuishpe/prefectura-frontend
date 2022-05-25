@@ -1,4 +1,4 @@
-import React, { useContext, useRef, useState, useCallback, forwardRef, useImperativeHandle } from 'react';
+import React, { useContext, useRef, useState, useCallback, forwardRef, useImperativeHandle, useEffect } from 'react';
 import { Button, Col, Form, Row } from 'react-bootstrap';
 import { ModalDiagnostico } from './ModalDiagnostico';
 import { AgGridReact } from 'ag-grid-react';
@@ -14,9 +14,9 @@ import OdontologyContext from 'contexts/OdontologyContext';
 const formatSelectedPlans = (details) => {
   if (!details) return []
   return details.map(detail => ({
-    plan_id:detail.plan_id,
-    diag_plan_id:detail.diag_plan_id,
-    id:detail.id
+    plan_id: detail.plan_id,
+    diag_plan_id: detail.diag_plan_id,
+    id: detail.id
   }))
 }
 
@@ -26,37 +26,33 @@ const formatSelectedPlans = (details) => {
  * @param {Array} diagnostics diagnosticos que provienen de la base de datos
  * @returns 
  */
-const formatDiagnostics=(diagnostics)=>{
-  if(!diagnostics)return []
-  return diagnostics.map(diag=>({
-    id:diag.id,
-    type:diag.type,
-    description:diag.diagnostic,
-    cie:{
-      label:diag.cie.disease,
-      value:diag.cie_id
+const formatDiagnostics = (diagnostics) => {
+  if (!diagnostics) return []
+  return diagnostics.map(diag => ({
+    id: diag.id,
+    type: diag.type,
+    description: diag.diagnostic,
+    cie: {
+      label: diag.cie.disease,
+      value: diag.cie_id
     }
   }))
 }
 
 
 const Diagnosticos = forwardRef(({ children }, ref) => {
-  const { data } = useContext(OdontologyContext)
+  //Refs
   const gridRef = useRef(null)
-
+  //Contexts
+  const { data } = useContext(OdontologyContext)
+  //States
   const [form, setForm] = useState({
-    plan_description: data?.planDiagnostic?.description || "",
-    selected_plans: formatSelectedPlans(data?.planDiagnostic?.details),
-    diagnostics: formatDiagnostics(data?.diagnostics),
-    id:data?.planDiagnostic?.id || null
+    plan_description: "",
+    selected_plans: [],
+    diagnostics: [],
+    id: null
   })
-
-  useImperativeHandle(ref, () => {
-    return {
-      getDataForDB
-    }
-  })
-
+  //Coldefs para el ag-grid
   const [columnDefs] = useState([
     {
       headerName: "Diagnóstico",
@@ -82,7 +78,6 @@ const Diagnosticos = forwardRef(({ children }, ref) => {
       maxWidth: 150
     }
   ]);
-
   const [dataModal, setDataModal] = useState({
     show: false,
     row: null
@@ -96,43 +91,54 @@ const Diagnosticos = forwardRef(({ children }, ref) => {
     setDataModal({ show: true, row: null })
   }
 
+  /**
+   * Devuelve todos los diagnosticos presentes en el ag-grid
+   */
   const getRowData = useCallback(() => {
     const rowData = [];
     gridRef.current.api.forEachNode(function (node) {
       rowData.push(node.data);
-    });
-    //console.log('Row Data:');
-    //console.log(rowData);
+    })
     return rowData
-  }, []);
+  }, [])
 
-
+  /**
+   * Agrega un diagnostico al ag-grid
+   */
   const addDiagnostic = useCallback((newDiagnostic) => {
     const newDiagnostics = [
       ...form.diagnostics,
       newDiagnostic
-    ];
-    console.log(newDiagnostics);
-    /*gridRef.current.api.applyTransaction({
-      add: newDiagnostics,
-    });*/
-    setForm({...form,diagnostics:newDiagnostics})
-    /*console.log(newDiagnostics);
-    console.log(getRowData());*/
-  }, []);
+    ]
+    setForm({ ...form, diagnostics: newDiagnostics })
+  }, [form]);
 
+  /**
+   * Actualiza un diagnostico en el ag-grid
+   */
+  const updateDiagnostic = useCallback(
+    (newDiagnostic) => {
+      let rowNode = gridRef.current.api.getSelectedNodes()[0]
+      rowNode.setData(newDiagnostic)
+    },
+    [],
+  )
 
-  const updateDiagnostic = (newDiagnostic) => {
-    let rowNode = gridRef.current.api.getSelectedNodes()[0]
-    rowNode.setData(newDiagnostic)
-    //actualizarDiagnosticos()
-  }
+  /**
+   * Elimina un diagnostico en el ag-grid
+   */
+  const deleteDiagnostic = useCallback(
+    () => {
+      const selectedData = gridRef.current.api.getSelectedRows();
+      gridRef.current.api.applyTransaction({ remove: selectedData });
+    },
+    [],
+  )
 
-  const deleteDiagnostic = () => {
-    const selectedData = gridRef.current.api.getSelectedRows();
-    gridRef.current.api.applyTransaction({ remove: selectedData });
-  }
-
+  /**
+   * Handler para editar un diagnostico en el ag-grid
+   * @returns 
+   */
   const handleClickEdit = () => {
     let rowsSelected = gridRef.current.api.getSelectedNodes()
     console.log(rowsSelected);
@@ -145,8 +151,10 @@ const Diagnosticos = forwardRef(({ children }, ref) => {
     }
     setDataModal({ show: true, row: rowData })
   }
-
-  //Handlers
+  /**
+   * Handler para el formulario del plan diagnostico
+   * @param {Event} e 
+   */
   const handleChange = (e) => {
     if (e.target.type === "checkbox") {
       let newSelected = [...form.selected_plans]
@@ -162,11 +170,33 @@ const Diagnosticos = forwardRef(({ children }, ref) => {
     }
   }
 
+  /**
+   * Devuelve los datos necesarios para ser enviados a la BD, 
+   * planes diagnosticos, descripcion y diagnosticos.
+   * @returns 
+   */
   const getDataForDB = () => {
     let data = { ...form }
     data.diagnostics = getRowData()
     return data
   }
+
+  useEffect(() => {
+    if (data) {
+      setForm({
+        plan_description: data?.planDiagnostic?.description || "",
+        selected_plans: formatSelectedPlans(data?.planDiagnostic?.details),
+        diagnostics: formatDiagnostics(data?.diagnostics),
+        id: data?.planDiagnostic?.id || null
+      })
+    }
+  }, [data])
+
+  useImperativeHandle(ref, () => {
+    return {
+      getDataForDB
+    }
+  })
 
   return (
     <>
@@ -194,7 +224,7 @@ const Diagnosticos = forwardRef(({ children }, ref) => {
                   <span className='fw-bold'>Seleccione un plan</span>
                   <div>
                     {
-                      data.plans ? data.plans.map((plan) => {
+                      data?.plans ? data.plans.map((plan) => {
                         return (
                           <Form.Check
                             type={'checkbox'}

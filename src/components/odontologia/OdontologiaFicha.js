@@ -16,21 +16,20 @@ import ActaDeConstitucion from './acta/ActaDeConstitucion';
 import Cabecera from './Cabecera';
 import { useUser } from 'hooks/useUser';
 import { NotFound } from 'components/NotFound';
-import { useNavigate, useParams } from 'react-router-dom';
-import { END_POINT, URL_HOST } from 'utils/conf';
+import { useNavigate} from 'react-router-dom';
+import { END_POINT } from 'utils/conf';
 import domtoimage from 'dom-to-image';
 import { dataURLtoFile } from 'utils/utilidades';
 import LoaderContext from 'contexts/LoaderContext';
 import ToastContext from 'contexts/ToastContext';
 import OdontologyService from 'services/OdontologyService';
-
+import { Odontogram } from './odontograma/Odontogram';
+import { OdontogramProvider } from 'contexts/OdontogramContext';
 
 export const OdontologiaFicha = () => {
-  console.log("FICHA");
+
   const navigate = useNavigate()
   const {
-    appoId,
-    nurId,
     recId,
     data,
     isEdit,
@@ -55,16 +54,16 @@ export const OdontologiaFicha = () => {
 
   const guardarFicha = async () => {
     try {
-      console.log(odontogramaRef.current.isOdontogramEmpty);
       openLoader("Generando imagen del odontograma...")
-      const file = await getOdontrogramImageFile(odontogramaRef.current.odontogramElement);
+      console.log(odontogramaRef.current.odontogramGridElement);
+      const file = await getOdontrogramImageFile(odontogramaRef.current.odontogramGridElement);
       if (!file) {
         closeLoader()
         return alert("Debe realizar al menos una modificación al odontograma...")
       }
       openLoader("Guardando datos de la ficha...")
       let dataToSend = {
-        appo_id: parseInt(appoId),
+        appo_id: data?.appoId,
         user_id: user.id,
         nur_id: data?.nursingAreaInfo.id,
         patient_record: cabeceraRef.current.data,
@@ -86,20 +85,20 @@ export const OdontologiaFicha = () => {
       formData.append('data', JSON.stringify(dataToSend))
       //Realizar post al backend
       console.log(dataToSend);
-
+      console.log(isEdit);
       if (isEdit) {
         await OdontologyService.updatePatientRecord(formData)
-        openToast("Datos actualizados correctamente", true)
         openLoader("Actualizando información de la UI...")
-        await loadDataForEdit(appoId, nurId, recId)
+        await loadDataForEdit(recId)
         closeLoader()
+        openToast("Datos actualizados correctamente", true)
       } else {
         await OdontologyService.savePatientRecord(formData)
-        openToast("Ficha creada correctamente", true)
         openLoader("Redirigiendo a sala de espera...")
+        openToast("Ficha creada correctamente", true)
         setTimeout(() => {
           closeLoader()
-          navigate("/odontologia/pacientes", { replace: true })
+          navigate("/odontologia/citas", { replace: true })
         }, 1000)
       }
 
@@ -113,9 +112,7 @@ export const OdontologiaFicha = () => {
   }
 
   const getOdontrogramImageFile = async (element) => {
-    //console.log(odontogramRef.current);
     const scale = 2;
-    //let $odontogramContainer = odontogramRef.current
     let offsetWidth = 0
     let offsetHeight = 0
 
@@ -135,30 +132,23 @@ export const OdontologiaFicha = () => {
     setKey("odontograma")
     offsetHeight = element.offsetHeight
     offsetWidth = element.offsetWidth
-    //console.log(offsetWidth, offsetHeight);
     let file = await getOdontogramaConvertedInFile(element, offsetWidth, offsetHeight, scale)
-    //$odontogramContainer.parentElement.classList.remove('active');
-    //setOdontogramImageFile(file)
     return file
   }
 
   const getOdontogramaConvertedInFile = async (element, offsetWidth, offsetHeight, scale) => {
     let dataURL = await domtoimage.toPng(element);
-    //if (key !== "odontograma")
-    //element.parentElement.parentElement.classList.remove("active");//Se oculta el tabpane
-    //element.parentElement.parentElement.classList.remove("opacity-0");
     console.log(dataURL);
     return dataURLtoFile(dataURL, "odontograma.png");
   }
 
   if (exist && !isEdit) {
-    return <NotFound />
+    return <NotFound /> 
   }
-  console.log(data);
+
   return (
     <>
       {
-        data &&
         <div className='d-flex flex-column h-100'>
           <div className='ficha-container'>
             <div className='sidebar'>
@@ -219,7 +209,7 @@ export const OdontologiaFicha = () => {
                   <div className='d-flex'>
                     <a
                       className='btn btn-danger me-2'
-                      href={END_POINT + `historial/cita/${appoId}/enfermeria/${nurId}/ficha/${recId}`}
+                      href={END_POINT + `odontologia/pdf/${recId}`}
                       target='_blank'
                     >Ver PDF</a>
                     <a
@@ -296,9 +286,9 @@ export const OdontologiaFicha = () => {
                           <Tratamientos ref={treatmentsRef} />
                         </Tab.Pane>
                         <Tab.Pane eventKey="odontograma">
-                          <OdontogramaProvider>
-                            <Odontograma ref={odontogramaRef} tabkey={key} />
-                          </OdontogramaProvider>
+                          <OdontogramProvider>
+                            <Odontogram ref={odontogramaRef}/>
+                          </OdontogramProvider>
                         </Tab.Pane>
                         <Tab.Pane eventKey="acta">
                           <ActaDeConstitucion ref={actaRef} />
@@ -311,9 +301,7 @@ export const OdontologiaFicha = () => {
             </div>
           </div>
         </div>
-
       }
-
     </>
   );
 };

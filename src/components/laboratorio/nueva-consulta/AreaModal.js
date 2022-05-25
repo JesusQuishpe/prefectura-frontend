@@ -1,24 +1,16 @@
-
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Button, Form, Modal } from 'react-bootstrap'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
+import {  Modal } from 'react-bootstrap'
 import AreaService from 'services/AreaService'
-import { AiFillDelete, AiFillEdit, AiFillFileAdd } from 'react-icons/ai';
-import DataTable from 'react-data-table-component';
 import { formatNumber } from 'utils/utilidades';
 import { AgGridReact } from 'ag-grid-react';
-
 import 'ag-grid-community/dist/styles/ag-grid.css';
 import 'ag-grid-community/dist/styles/ag-theme-alpine.css';
-
-
 
 export const AreaModal = ({ show, closeModal, addTestsToOrderFromArea }) => {
   //Refs
   const gridRef = useRef(null)
   //States
   const [areas, setAreas] = useState([])
-
-
 
   const [columnDefs] = useState([
     { field: "id", maxWidth: 100, sortable: true },
@@ -27,32 +19,30 @@ export const AreaModal = ({ show, closeModal, addTestsToOrderFromArea }) => {
     { headerName:"Precio",field: "price", sortable: true, valueFormatter: (params) => formatNumber(params.value) }
   ]);
 
-  
-
-  //Functions
-  const getAreas = async () => {
+  /**
+   * Carga las areas de laboratorio
+   */
+  const loadAreas = async () => {
     let areasFromService = await AreaService.getAreas();
     setAreas(areasFromService)
-    console.log(areasFromService);
   }
 
   //Use effects
   useEffect(() => {
-    getAreas()
+    loadAreas()
   }, [])
 
-  //Handlers
+  /**
+   * Handler para doble click en una fila del ag-grid
+   * @param {Event} e 
+   */
   const handleDoubleClickRow = (e) => {
     addTestsToOrderFromArea(e.data)
   }
 
-  /*const onSelectionChanged = useCallback(() => {
-    const selectedRows = gridRef.current.api.getSelectedRows();
-    console.log(selectedRows);
-    document.querySelector('#selectedRows').innerHTML =
-      selectedRows.length === 1 ? selectedRows[0].athlete : '';
-  }, []);*/
-
+  /**
+   * Función para cambiar de fila cuando presiona la tecla tab en el ag-grid
+   */
   const tabToNextCell = useCallback((params) => {
     const previousCell = params.previousCellPosition;
     const lastRowIndex = previousCell.rowIndex;
@@ -87,13 +77,11 @@ export const AreaModal = ({ show, closeModal, addTestsToOrderFromArea }) => {
             rowData={areas}
             columnDefs={columnDefs}
             rowSelection={'single'}
-           
             pagination
             onCellKeyDown={(e) => {
               e.event.preventDefault()
-              console.log(e);
               if (e.event.key === "Enter") {
-                //addTestToOrder({ ...e.data, tipo: "A" })
+                addTestsToOrderFromArea(e.data)
               }
             }}
             tabToNextCell={tabToNextCell}
@@ -103,12 +91,6 @@ export const AreaModal = ({ show, closeModal, addTestsToOrderFromArea }) => {
         </div>
       </Modal.Body>
       <Modal.Footer>
-        {/*<Button variant="primary" form='form-helycobacter' type='submit'>
-          Guardar
-        </Button>
-        <Button variant="secondary" onClick={closeModal}>
-          Cancelar
-          </Button>*/}
       </Modal.Footer>
     </Modal>
   )

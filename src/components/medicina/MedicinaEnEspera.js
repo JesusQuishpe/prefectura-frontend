@@ -1,8 +1,8 @@
-import React, { useContext, useEffect, useRef, useState } from 'react'
+import React, { useContext, useRef, useState } from 'react'
 import { Button } from 'react-bootstrap'
 import { ModalMedicina } from './ModalMedicina'
 import MedicineService from 'services/MedicineService'
-import { AiFillDelete, AiFillFileAdd,AiOutlineReload  } from 'react-icons/ai';
+import { AiFillDelete, AiFillFileAdd, AiOutlineReload } from 'react-icons/ai';
 import { AgGridReact } from 'ag-grid-react';
 import 'ag-grid-community/dist/styles/ag-grid.css';
 import 'ag-grid-community/dist/styles/ag-theme-alpine.css';
@@ -13,18 +13,24 @@ import ToastContext from 'contexts/ToastContext';
 export const MedicinaEnEspera = () => {
   //Refs
   const gridRef = useRef(null)
+  //Contexts
+  const { openToast } = useContext(ToastContext)
+  //Other hooks
+  const { openModal, closeModal } = useDeleteModal()
+  //States
   const initialData = [];
   const [data, setData] = useState(initialData);
   const [dataModal, setDataModal] = useState({});
-  const { openModal, closeModal } = useDeleteModal()
-  const { openToast } = useContext(ToastContext)
 
+  /**
+   * Elimina un registro de medicina dado su nurId
+   * @param {number} nurId 
+   */
   const deleteRecord = async (nurId) => {
     try {
       await MedicineService.deletePatientOfQueue(nurId)
       loadPatientQueue()
       closeModal()
-      //console.log(props);
     } catch (error) {
       console.log(error);
       let message = error.response.data.message ? error.response.data.message :
@@ -34,6 +40,9 @@ export const MedicinaEnEspera = () => {
 
   }
 
+  /**
+   * Carga los pacientes que estan en espera en el area de medicina
+   */
   const loadPatientQueue = async () => {
     try {
       gridRef.current.api.showLoadingOverlay()
@@ -125,6 +134,10 @@ export const MedicinaEnEspera = () => {
     }
   ]);
 
+  /**
+   * Abre el modal para el area de medicina
+   * @param {object} data 
+   */
   const openMedicineModal = (data) => {
     setDataModal({
       show: true,
@@ -132,21 +145,29 @@ export const MedicinaEnEspera = () => {
     })
   };
 
+  /**
+   * Cierra el modal del area de medicina
+   */
   const closeMedicineModal = () => {
     setDataModal({
       show: false,
       data: null
     })
   }
+
+  /**
+   * Handler para recargar los pacientes en espera
+   */
   const handleReload = () => {
     loadPatientQueue()
   }
+
   return (
     <>
       <div className='w-100 p-4'>
         <h1 className='text-center'>Area de medicina</h1>
         <div className='d-flex justify-content-end mb-3'>
-          <Button onClick={handleReload}><AiOutlineReload className='me-2'/>Recargar</Button>
+          <Button onClick={handleReload}><AiOutlineReload className='me-2' />Recargar</Button>
         </div>
         <div className="ag-theme-alpine" style={{ height: 450, width: "100%" }}>
           <AgGridReact

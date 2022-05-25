@@ -1,51 +1,62 @@
 import React, { useEffect, useState } from 'react'
 import { Button, Col, Form, Row } from 'react-bootstrap'
-import { useNavigate } from 'react-router-dom';
-import { useUser } from '../../hooks/useUser';
-import LogoSoftware from '../../assets/png/prefectura_logo.png'
+import { useNavigate } from 'react-router-dom'
+import { useUser } from 'hooks/useUser'
+import LogoSoftware from 'assets/png/logo-software.png'
 
 export const Login = () => {
-  const navigate = useNavigate();
-  const { login, isLogged } = useUser();
+  //States
   const initialForm = {
     email: "",
     password: ""
-  };
-  const [form, setForm] = useState(initialForm);
+  }
+  const [form, setForm] = useState(initialForm)
+  //Other hooks
+  const navigate = useNavigate()
+  const { login, isLogged } = useUser()
 
+  /**
+   * Handler para actualizar los valores del formulario
+   * @param {Event} e 
+   */
   const handleChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value } = e.target
     setForm({
       ...form,
       [name]: value
-    });
-  };
+    })
+  }
 
+  /**
+   * Handler para loguear al usuario
+   * @param {Event} e 
+   * @returns 
+   */
   const handleClick = async (e) => {
     try {
       e.preventDefault()
-      login(form);
+      login(form)
     } catch (error) {
       /*if(error.response.status===422){
           alert("Debe proporcionar un correo valido");
           return;
       }*/
       if (error.response.status === 401) {
-        alert("Error las credenciales");
-        return;
+        alert("Error las credenciales")
+        return
       }
     }
-  };
+  }
 
   useEffect(() => {
     if (isLogged) return navigate('/');
-  }, [isLogged]);
+  }, [isLogged])
 
   return (
     <div className='d-flex justify-content-center align-items-center min-vh-100'>
       <Form className='w-50 p-4' onSubmit={handleClick}>
         <div className='d-flex flex-column align-items-center mb-4'>
-          <img src={LogoSoftware} width={"250"} />
+          <img src={LogoSoftware} width={"250"} alt='Logo prefectura'/>
         </div>
         <Form.Group as={Row} className="mb-3" controlId="email">
           <Form.Label as={Col} sm={3} className='text-start'>
@@ -66,7 +77,6 @@ export const Login = () => {
         <div className='d-flex justify-content-end'>
           <Button type='submit'>Ingresar</Button>
         </div>
-
       </Form>
     </div>
   )

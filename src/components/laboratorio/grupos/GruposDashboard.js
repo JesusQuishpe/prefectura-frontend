@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useRef, useState } from 'react';
+import React, { useContext, useRef, useState } from 'react';
 import { Button } from 'react-bootstrap';
 import { AiFillDelete, AiFillEdit, AiFillFileAdd } from 'react-icons/ai';
 import { Link, useNavigate } from 'react-router-dom';
@@ -11,18 +11,25 @@ import ToastContext from 'contexts/ToastContext';
 import { useDeleteModal } from 'hooks/useDeleteModal';
 
 export const GruposDashboard = () => {
+  //Refs
   const gridRef = useRef(null)
-  const [grupos, setGrupos] = useState([])
+  //Contexts
+  const { openToast } = useContext(ToastContext)
+  //Other hooks
   const { openModal, closeModal } = useDeleteModal()
   const navigate = useNavigate();
-  const { openToast } = useContext(ToastContext)
+  //States
+  const [grupos, setGrupos] = useState([])
 
+  /**
+   * Elimina un grupo de la base de datos
+   * @param {number} id identificador del grupo
+   */
   const deleteRecord = async (id) => {
     try {
       await GrupoService.eliminarGrupo(id)
       getGrupos()
       closeModal()
-      //console.log(props);
     } catch (error) {
       console.log(error);
       let message = error.response.data.message ?
@@ -99,6 +106,9 @@ export const GruposDashboard = () => {
     }
   ]);
 
+  /**
+   * Carga los grupos en el ag-grid
+   */
   const getGrupos = async () => {
     try {
       gridRef.current.api.showLoadingOverlay()
@@ -118,9 +128,9 @@ export const GruposDashboard = () => {
 
   return (
     <>
-      <div className='w-75 mx-auto mt-4'>
-        <h2 className='mb-4'>Grupos de laboratorio</h2>
-        <div className='mb-4'>
+      <div className='w-100 p-4'>
+        <h2 className='mb-3'>Grupos de laboratorio</h2>
+        <div className='mb-3'>
           <Link className='btn btn-success' to={"nuevo"}><AiFillFileAdd />Nuevo</Link>
         </div>
         <div className="ag-theme-alpine" style={{ height: 450, width: "100%" }}>

@@ -7,8 +7,8 @@ UserService.getUsers = async () => {
   let response = await axios.get(END_POINT + "users");
   return response.data.data
 }
-UserService.createUser=async (user)=>{
-  let response=await axios.post(END_POINT + "users", user);
+UserService.createUser = async (user) => {
+  let response = await axios.post(END_POINT + "users", user);
   return response.data.data
 }
 UserService.updateUser = async (user) => {
@@ -17,5 +17,9 @@ UserService.updateUser = async (user) => {
 }
 UserService.deleteUser = async (id) => {
   let response = await axios.delete(END_POINT + `users/${id}`);
+  return response.data.data
+}
+UserService.getUserById = async (id) => {
+  let response = await axios.get(END_POINT + `users/${id}`);
   return response.data.data
 }

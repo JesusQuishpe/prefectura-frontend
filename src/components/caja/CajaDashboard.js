@@ -1,27 +1,26 @@
-import axios from 'axios';
-import { FilterComponent } from 'components/FilterComponent';
-import { SinPermisoPage } from 'components/SinPermisoPage';
-import { useUser } from 'hooks/useUser';
 import React, { useContext, useEffect, useRef, useState } from 'react';
-import { Button, Card, Form, FormControl, InputGroup, Row, Spinner } from 'react-bootstrap';
+import { Button, Card, Form, FormControl, InputGroup, Spinner } from 'react-bootstrap';
 import DataTable from 'react-data-table-component';
 import { AiFillDelete, AiOutlineReload, AiFillFileAdd } from 'react-icons/ai';
-import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import CajaService from 'services/CajaService';
-import { END_POINT } from '../../utils/conf';
-import styled, { keyframes } from 'styled-components';
 import 'css/ReactDataTableStyles.css'
 import { MyCustomLoader } from 'components/MyCustomLoader';
 import { useDeleteModal } from 'hooks/useDeleteModal';
 import ToastContext from 'contexts/ToastContext';
 
+//Config datatable
+const paginationConfig = {
+  rowsPerPageText: "Filas por página",
+  rangeSeparatorText: "de",
+  selectAllRowsItem: true,
+  selectAllRowsItemText: "Todos"
+}
 
 export const CajaDashboard = () => {
   const [citas, setCitas] = useState([]);
   const [pending, setPending] = useState(true);
   const [page, setPage] = useState(1);
-  const navigate = useNavigate();
-  const [filtro, setFiltros] = useState("todos");
   const [isFinishSearch, setIsFinishSearch] = useState(true);
   const [resetPaginationToggle, setResetPaginationToggle] = useState(false)
   const inputFullnameRef = useRef();
@@ -36,7 +35,10 @@ export const CajaDashboard = () => {
     endDate: "",
     conditionalChecks: []
   })
-
+  /**
+   * Elimina una cita de la base de datos
+   * @param {number} id 
+   */
   const deleteRecord = async (id) => {
     try {
       await CajaService.deleteCita(id)
@@ -59,9 +61,9 @@ export const CajaDashboard = () => {
   }
 
   const Acciones = ({ row }) => {
-    const editarClick = () => {
+    /*const editarClick = () => {
       navigate(`editar/${row.id}`);
-    }
+    }*/
 
     const deleteClick = () => {
       openModal({
@@ -80,15 +82,6 @@ export const CajaDashboard = () => {
       </div>
     )
   }
-
-  //Config datatable
-  const paginationConfig = {
-    rowsPerPageText: "Filas por página",
-    rangeSeparatorText: "de",
-    selectAllRowsItem: true,
-    selectAllRowsItemText: "Todos"
-  }
-
 
   const columns = [
     {
@@ -150,7 +143,6 @@ export const CajaDashboard = () => {
 
   //Use effects
   useEffect(() => {
-    console.log("PAGE");
     if (isSearchByFilter === "form" || isSearchByFilter === "identification") {
       cargarDatosTabla({
         ...form,
@@ -160,12 +152,14 @@ export const CajaDashboard = () => {
     } else {
       searchByFullname(page)
     }
-
+    return () => {
+      setPending(false)
+      setCitas([])
+    }
   }, [page]);
 
   useEffect(() => {
     if (isSearchByFilter === "form") {
-      console.log("FORM");
       setResetPaginationToggle(true)
       inputFullnameRef.current.value = ""
       cargarDatosTabla({
@@ -174,8 +168,16 @@ export const CajaDashboard = () => {
         page: 1
       });
     }
+    return () => {
+      setPending(false)
+      setCitas([])
+    }
   }, [form])
 
+  /**
+   * Busca las citas por nombre completo del paciente
+   * @param {number} page número de pagina para paginación
+   */
   const searchByFullname = async (page) => {
     setPending(true)
     const data = await CajaService.searchByFullname(inputFullnameRef.current.value, page)
@@ -183,6 +185,10 @@ export const CajaDashboard = () => {
     setCitas(data)
   }
 
+  /**
+   * Handler para actualizar los valores del formulario y el filtro
+   * @param {Event} e 
+   */
   const onChangeForm = (e) => {
     const { name, value } = e.target
     const newForm = { ...form, [name]: value }
@@ -190,23 +196,10 @@ export const CajaDashboard = () => {
     setIsSearchByFilter("form")
   }
 
-  const handleChecked = (e) => {
-    const { name, checked } = e.target
-    const checks = [...form.conditionalChecks]
-    const index = checks.findIndex(check => check === name)
-    if (index > -1) {
-      checks.splice(index, 1)
-    } else {
-      checks.push(name)
-    }
-    setForm({ ...form, conditionalChecks: checks })
-    //cargarDatosTabla(e.target.value);
-    //setResetPaginationToggle(!resetPaginationToggle)
-    //setPage(1)
-    //cargarDatosTabla(filtro, page);
-    //setFiltros(e.target.value);
-  }
-
+  /**
+   * Handler para cargar las citas por el número de cédula 
+   * @param {Event} e 
+   */
   const handleSearchByIdentificationSubmit = (e) => {
     e.preventDefault()
     setResetPaginationToggle(true)
@@ -218,6 +211,10 @@ export const CajaDashboard = () => {
     })
   }
 
+  /**
+   * Handler para cargar las citas por nombre completo
+   * @param {Event} e 
+   */
   const handleFullnameSubmit = async (e) => {
     e.preventDefault()
     setIsSearchByFilter("fullname")

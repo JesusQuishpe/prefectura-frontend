@@ -6,8 +6,10 @@ import { Button, Form, Modal } from 'react-bootstrap';
 import PruebaService from 'services/PruebaService';
 import { formatNumber } from 'utils/utilidades';
 
-export const ModalFormula = ({ show, closeModal,saveFormula }) => {
+export const ModalFormula = ({ show, closeModal, saveFormula }) => {
+  //Refs
   const gridRef = useRef(null)
+  //States
   const [pruebas, setPruebas] = useState([])
   const [formula, setFormula] = useState("")
   const [columnDefs] = useState([
@@ -46,6 +48,9 @@ export const ModalFormula = ({ show, closeModal,saveFormula }) => {
     },
   ]);
 
+  /**
+   * Carga todas las pruebas de laboratorio
+   */
   const getPruebas = async () => {
     try {
       gridRef.current.api.showLoadingOverlay()
@@ -55,7 +60,6 @@ export const ModalFormula = ({ show, closeModal,saveFormula }) => {
       } else {
         gridRef.current.api.hideOverlay()
       }
-      console.log(pruebasFromService);
       setPruebas(pruebasFromService)
     } catch (error) {
       gridRef.current.api.showNoRowsOverlay()
@@ -63,12 +67,19 @@ export const ModalFormula = ({ show, closeModal,saveFormula }) => {
     }
   }
 
+  /**
+   * Handler para doble click en las filas del ag-grid
+   * @param {Event} e evento del ag-grid 
+   */
   const handleDoubleClickRow = (e) => {
     const { data } = e
     console.log(data.code);
     addTestToFormula(data.code)
   }
 
+  /**
+    * Función para cambiar de fila cuando presiona la tecla tab en el ag-grid
+    */
   const tabToNextCell = useCallback((params) => {
     const previousCell = params.previousCellPosition;
     const lastRowIndex = previousCell.rowIndex;
@@ -90,14 +101,24 @@ export const ModalFormula = ({ show, closeModal,saveFormula }) => {
     return result;
   }, []);
 
+  /**
+   * Agrega el codigo de la prueba a la formula
+   * @param {string} testCode codigo de la prueba
+   */
   const addTestToFormula = (testCode) => {
     let formulaCopy = formula
     setFormula(formulaCopy + testCode)
   }
-  const handleClick=(e)=>{
+
+  /**
+   * Guarda la formula y cierra el modal
+   * @param {Event} e 
+   */
+  const handleClick = (e) => {
     saveFormula(formula)
     closeModal()
   }
+
   return (
     <Modal show={show} onHide={closeModal} dialogClassName='modal-25w' size='lg'>
       <Modal.Header closeButton>
@@ -112,11 +133,12 @@ export const ModalFormula = ({ show, closeModal,saveFormula }) => {
             columnDefs={columnDefs}
             rowSelection={'single'}
             pagination
+            debounceVerticalScrollbar={true}
             onCellKeyDown={(e) => {
               e.event.preventDefault()
               console.log(e);
               if (e.event.key === "Enter") {
-                //addTestToOrder({ ...e.data, tipo: "A" })
+                addTestToFormula(e.data.code)
               }
             }}
             tabToNextCell={tabToNextCell}

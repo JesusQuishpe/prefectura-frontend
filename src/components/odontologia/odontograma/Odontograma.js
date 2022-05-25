@@ -4,7 +4,7 @@ import React, { createRef, forwardRef, useContext, useEffect, useImperativeHandl
 import { Alert, Col, Row } from 'react-bootstrap';
 import { dataURLtoFile } from 'utils/utilidades';
 import Cuadrante from './Cuadrante';
-import { MovilidadRecesion } from './MovilidadRecesion';
+import  MovilidadRecesion  from './MovilidadRecesion';
 import { Paleta } from './paleta/Paleta';
 
 

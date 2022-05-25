@@ -1,7 +1,6 @@
-import React, { useContext, useEffect, useRef, useState } from 'react';
+import React, { useContext, useRef, useState } from 'react';
 import MedidaService from 'services/MedidaService';
-import { Button, Modal } from 'react-bootstrap';
-import DataTable from 'react-data-table-component';
+import { Button} from 'react-bootstrap';
 import { AiFillDelete, AiFillEdit, AiFillFileAdd } from 'react-icons/ai';
 import { Link, useNavigate } from 'react-router-dom';
 import { AgGridReact } from 'ag-grid-react';
@@ -20,10 +19,9 @@ export const MedidaDashboard = () => {
 
   const deleteRecord = async (id) => {
     try {
-      let response = await MedidaService.eliminarMedida(id)
+      await MedidaService.eliminarMedida(id)
       getMedidas()
       closeModal()
-      //console.log(props);
     } catch (error) {
       console.log(error);
       let message = error.response.data.message ? error.response.data.message :
@@ -111,9 +109,9 @@ export const MedidaDashboard = () => {
 
   return (
     <>
-      <div className='w-75 mx-auto mt-4'>
-        <h2 className='mb-4'>Medidas</h2>
-        <div className='mb-4'>
+      <div className='w-100 p-4'>
+        <h2 className='mb-3'>Medidas</h2>
+        <div className='mb-3'>
           <Link className='btn btn-success' to={"nuevo"}><AiFillFileAdd />Nuevo</Link>
         </div>
         <div className="ag-theme-alpine" style={{ height: 450, width: "100%" }}>

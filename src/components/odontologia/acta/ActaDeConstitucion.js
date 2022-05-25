@@ -1,7 +1,6 @@
-import React, { useCallback, useEffect, useMemo, useState, useImperativeHandle, forwardRef } from 'react'
+import React, { useCallback, useEffect, useState, useImperativeHandle, forwardRef } from 'react'
 import 'css/Ficha.css'
 import { useDropzone } from 'react-dropzone'
-import { ProgressBar } from 'react-bootstrap';
 import DownloadIcon from 'assets/png/download.png'
 import PDFIcon from 'assets/png/pdf.png'
 

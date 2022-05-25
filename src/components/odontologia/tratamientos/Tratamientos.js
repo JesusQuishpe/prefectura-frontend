@@ -1,4 +1,4 @@
-import React, { forwardRef, useCallback, useRef, useState, useImperativeHandle, useContext } from 'react';
+import React, { forwardRef, useCallback, useRef, useState, useImperativeHandle, useContext, useEffect } from 'react';
 import { ModalTratamiento } from './ModalTratamiento';
 import { AgGridReact } from 'ag-grid-react';
 import 'ag-grid-community/dist/styles/ag-grid.css';
@@ -12,21 +12,21 @@ import OdontologyContext from 'contexts/OdontologyContext';
  * @param {Array} treatments tratamientos que provienen de la base de datos
  * @returns 
  */
- const formatTreatments=(treatments)=>{
-  if(!treatments)return []
-  return treatments.map(treatment=>({
-    id:treatment.id,
-    sesion:treatment.sesion,
-    complications:treatment.complications,
-    procedures:treatment.procedures,
-    prescriptions:treatment.prescriptions
+const formatTreatments = (treatments) => {
+  if (!treatments) return []
+  return treatments.map(treatment => ({
+    id: treatment.id,
+    sesion: treatment.sesion,
+    complications: treatment.complications,
+    procedures: treatment.procedures,
+    prescriptions: treatment.prescriptions
   }))
 }
 
 const Tratamientos = forwardRef((props, ref) => {
   const { data } = useContext(OdontologyContext)
   const gridRef = useRef(null)
-  const [treatments, setTreatments] = useState(formatTreatments(data?.treatments))
+  const [treatments, setTreatments] = useState([])
   const [dataModal, setDataModal] = useState({
     show: false,
     row: null
@@ -88,7 +88,7 @@ const Tratamientos = forwardRef((props, ref) => {
   }, []);
 
   const addTreatment = useCallback((treatment) => {
-    let newTreatment={...treatment,sesion:gridRef.current.api.getDisplayedRowCount()+1}
+    let newTreatment = { ...treatment, sesion: gridRef.current.api.getDisplayedRowCount() + 1 }
     const newItems = [
       ...treatments,
       newTreatment
@@ -105,8 +105,8 @@ const Tratamientos = forwardRef((props, ref) => {
   const deleteTreatment = () => {
     const selectedData = gridRef.current.api.getSelectedRows();
     gridRef.current.api.applyTransaction({ remove: selectedData });
-    gridRef.current.api.forEachNode((node,index) => {
-      node.data.sesion=index+1
+    gridRef.current.api.forEachNode((node, index) => {
+      node.data.sesion = index + 1
     })
     gridRef.current.api.redrawRows()
     //Identificar filas eliminadas que ya existian en la bd y agregarlas a un array de eliminados
@@ -122,10 +122,16 @@ const Tratamientos = forwardRef((props, ref) => {
       procedures: rowSelected.data.procedures,
       prescriptions: rowSelected.data.prescriptions,
       sesion: rowSelected.data.sesion,
-      id:rowSelected.data.id
+      id: rowSelected.data.id
     }
     setDataModal({ show: true, row: rowData })
   }
+
+  useEffect(() => {
+    if (data) {
+      setTreatments(formatTreatments(data?.treatments))
+    }
+  }, [data])
 
 
   return (

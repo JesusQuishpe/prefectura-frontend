@@ -1,16 +1,13 @@
-import OdontogramaContext from 'contexts/OdontogramaContext';
-import React, { useContext } from 'react';
-import Diente from './Diente';
+import React from 'react'
+import Tooth from './Tooth'
 
+const Quadrant = ({ quadrant, type, reverse, teeth, details, optionSelected, updateEditedTeeth }) => {
+  const teethOfQuadrant = teeth ? teeth.filter((t) => t.quadrant === quadrant && t.type === type) : []
 
-const Cuadrante = ({ quadrant, teeth, reverse, details}) => {
-  const { optionSelected, updateTooth } = useContext(OdontogramaContext)
-  console.log(details);
-  
   return (
     <div id={`cuadrante-${quadrant}`} className='cuadrante'>
       {
-        teeth.map((tooth, index) => {
+        teethOfQuadrant.map((tooth, index) => {
           let toothFinded = details.find(toothDetail => toothDetail.tooth_id === tooth.id)
           let toothData = {
             id: toothFinded?.id || null,
@@ -29,28 +26,29 @@ const Cuadrante = ({ quadrant, teeth, reverse, details}) => {
           if ((quadrant === 5 || quadrant === 8) && index === 0) {
             return (
               <div style={{ gridColumnStart: 4 }} key={tooth.id}>
-                <Diente
+                <Tooth
                   key={tooth.id}
                   tooth={toothData}
                   reverse={reverse}
                   optionSelected={optionSelected}
-                  updateTooth={updateTooth}
+                  updateEditedTeeth={updateEditedTeeth}
                 />
               </div>
             )
           }
           return (
-            <Diente
+            <Tooth
               key={tooth.id}
               tooth={toothData}
               reverse={reverse}
               optionSelected={optionSelected}
-              updateTooth={updateTooth}
+              updateEditedTeeth={updateEditedTeeth}
             />
           )
         })
       }
     </div>
   )
-};
-export default React.memo(Cuadrante)
+}
+
+export default React.memo(Quadrant)

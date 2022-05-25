@@ -1,6 +1,6 @@
 import OdontologyContext from 'contexts/OdontologyContext'
 import React, { forwardRef, useState, useImperativeHandle, useContext, useEffect } from 'react'
-import { Col, Form, FormGroup, Row } from 'react-bootstrap'
+import { Col, Form, FormGroup} from 'react-bootstrap'
 
 
 const PRICES = {

@@ -1,20 +1,18 @@
-import React, { useContext, useState } from 'react'
+import React, { useContext, useEffect, useState } from 'react'
 import { ErrorMessage, Field, Form, Formik } from 'formik'
 import * as Yup from 'yup';
 import { Alert, Col, Form as FormReact, Row } from 'react-bootstrap'
-import axios from 'axios';
-import { END_POINT } from '../../utils/conf';
 import 'css/Errors.css'
 import { useUser } from 'hooks/useUser';
 import LoaderContext from 'contexts/LoaderContext';
 import ToastContext from 'contexts/ToastContext';
+import EnfermeriaService from 'services/EnfermeriaService';
 
 export const EnfermeriaForm = ({ data, loadPatientQueue, closeModal }) => {
-  console.log(data);
-  const { user } = useUser()
+  //Contexts
   const { openToast } = useContext(ToastContext)
+  //States
   const { openLoader, closeLoader } = useContext(LoaderContext)
-
   const initialForm = {
     appo_id: data?.appo_id,
     weight: "",
@@ -27,14 +25,46 @@ export const EnfermeriaForm = ({ data, loadPatientQueue, closeModal }) => {
     healing: "",
     doctor: "",
     nurse: ""
-  };
+  }
+  const [form, setForm] = useState(initialForm)
+  //Other hooks
+  const { user } = useUser()
+  const nurId = data?.nur_id
+
+  /**
+   * Carga los datos de enfemeria para poder editar
+   * @param {number} nurId 
+   */
+  const loadDataForEdit = async (nurId) => {
+    let result = await EnfermeriaService.getRecord(nurId)
+    setForm({
+      appo_id: result.appo_id,
+      weight: result.weight,
+      stature: result.stature,
+      temperature: result.temperature,
+      pressure: result.pressure,
+      disability: result.disability,
+      pregnancy: result.pregnancy,
+      inyection: result.inyection,
+      healing: result.healing,
+      doctor: result.doctor,
+      nurse: result.nurse
+    })
+    console.log(result);
+  }
+
+  useEffect(() => {
+    if (nurId) {
+      loadDataForEdit(nurId)
+    }
+  }, [])
 
   return (
     <>
       <Formik
-        //enableReinitialize={true}
+        enableReinitialize={true}
         initialValues={
-          initialForm
+          form
         }
 
         validationSchema={
@@ -55,20 +85,26 @@ export const EnfermeriaForm = ({ data, loadPatientQueue, closeModal }) => {
         onSubmit={async (valores, { resetForm }) => {
           console.log(valores);
           try {
-            openLoader("Guardando datos...")
-            let dataToSend={
+
+            let dataToSend = {
               ...valores,
-              disability:valores.disability ? valores.disability : 0,
-              pregnancy:valores.pregnancy ? valores.pregnancy : 0,
+              disability: valores.disability ? valores.disability : 0,
+              pregnancy: valores.pregnancy ? valores.pregnancy : 0,
               user_id: user.id
             }
-            let response = await axios.post(END_POINT + "enfermerias", dataToSend);
-            console.log(response.data);
-            //setForm(initialForm);
-            loadPatientQueue()
-            resetForm()
-            closeLoader()
-            openToast("Datos registrados correctamente...", true)
+            if (nurId) {//Editamos el registro en la DB
+              openLoader("Actualizando datos...")
+              await EnfermeriaService.update({ ...dataToSend, nurId })
+              closeLoader()
+              openToast("Datos actualizados correctamente...", true)
+            } else {
+              openLoader("Guardando datos...")
+              await EnfermeriaService.save(dataToSend)
+              closeLoader()
+              openToast("Datos registrados correctamente...", true)
+              loadPatientQueue()
+            }
+            resetForm({ values: initialForm, errors: {} })
             closeModal()
           } catch (error) {
             console.log(error);
@@ -104,10 +140,10 @@ export const EnfermeriaForm = ({ data, loadPatientQueue, closeModal }) => {
                       Estatura en cm <span className="text-danger">*</span>
                     </FormReact.Label>
                     <Col>
-                      <Field 
-                      className={`form-control ${touched.stature && errors.stature && 'error'}`} 
-                      type="number" 
-                      name='stature' 
+                      <Field
+                        className={`form-control ${touched.stature && errors.stature && 'error'}`}
+                        type="number"
+                        name='stature'
                       />
                       <ErrorMessage name='stature' component={() => (<FormReact.Text className="text-danger">{errors.stature}</FormReact.Text>)} />
                     </Col>
@@ -119,10 +155,10 @@ export const EnfermeriaForm = ({ data, loadPatientQueue, closeModal }) => {
                       Temperatura en °C <span className="text-danger">*</span>
                     </FormReact.Label>
                     <Col>
-                      <Field 
-                      className={`form-control ${touched.temperature && errors.temperature && 'error'}`} 
-                      type="number" 
-                      name='temperature' 
+                      <Field
+                        className={`form-control ${touched.temperature && errors.temperature && 'error'}`}
+                        type="number"
+                        name='temperature'
                       />
                       <ErrorMessage name='temperature' component={() => (<FormReact.Text className="text-danger">{errors.temperature}</FormReact.Text>)} />
                     </Col>
@@ -132,10 +168,10 @@ export const EnfermeriaForm = ({ data, loadPatientQueue, closeModal }) => {
                       Presión <span className="text-danger">*</span>
                     </FormReact.Label>
                     <Col>
-                      <Field 
-                      className={`form-control ${touched.pressure && errors.pressure && 'error'}`} 
-                      type="text" name='pressure' 
-                      maxLength={7}
+                      <Field
+                        className={`form-control ${touched.pressure && errors.pressure && 'error'}`}
+                        type="text" name='pressure'
+                        maxLength={7}
                       />
                       <ErrorMessage name='pressure' component={() => (<FormReact.Text className="text-danger">{errors.pressure}</FormReact.Text>)} />
                     </Col>
@@ -153,7 +189,7 @@ export const EnfermeriaForm = ({ data, loadPatientQueue, closeModal }) => {
                                     </FormReact.Group>*/}
                   <FormReact.Group as={Col} className="mb-3" controlId="disability">
                     <FormReact.Label className='text-start'>
-                      Discapacidad % 
+                      Discapacidad %
                     </FormReact.Label>
                     <Col>
                       <Field className={`form-control ${touched.disability && errors.disability && 'error'}`} type="text" name='disability' />
@@ -162,13 +198,13 @@ export const EnfermeriaForm = ({ data, loadPatientQueue, closeModal }) => {
                   </FormReact.Group>
                   <FormReact.Group as={Col} className="mb-3" controlId="pregnancy">
                     <FormReact.Label className='text-start'>
-                      Embarazo 
+                      Embarazo
                     </FormReact.Label>
                     <Col>
-                      <Field 
-                      className={`form-control ${touched.pregnancy && errors.pregnancy && 'error'}`} 
-                      type="number" 
-                      name='pregnancy' />
+                      <Field
+                        className={`form-control ${touched.pregnancy && errors.pregnancy && 'error'}`}
+                        type="number"
+                        name='pregnancy' />
                       <ErrorMessage name='pregnancy' component={() => (<FormReact.Text className="text-danger">{errors.pregnancy}</FormReact.Text>)} />
                     </Col>
                   </FormReact.Group>
@@ -176,14 +212,14 @@ export const EnfermeriaForm = ({ data, loadPatientQueue, closeModal }) => {
                 <Row>
                   <FormReact.Group as={Col} className="mb-3" controlId="inyection">
                     <FormReact.Label className='text-start'>
-                      Inyección 
+                      Inyección
                     </FormReact.Label>
                     <Col>
-                      <Field 
-                      className={`form-control ${touched.inyection && errors.inyection && 'error'}`} 
-                      type="text" 
-                      name='inyection' 
-                      maxLength={15}
+                      <Field
+                        className={`form-control ${touched.inyection && errors.inyection && 'error'}`}
+                        type="text"
+                        name='inyection'
+                        maxLength={15}
                       />
                       <ErrorMessage name='inyection' component={() => (<FormReact.Text className="text-danger">{errors.inyection}</FormReact.Text>)} />
                     </Col>
@@ -192,14 +228,14 @@ export const EnfermeriaForm = ({ data, loadPatientQueue, closeModal }) => {
                 <Row>
                   <FormReact.Group as={Col} className="mb-3" controlId="healing">
                     <FormReact.Label className='text-start'>
-                      Curación 
+                      Curación
                     </FormReact.Label>
                     <Col>
-                      <Field 
-                      className={`form-control ${touched.healing && errors.healing && 'error'}`} 
-                      type="text" 
-                      name='healing' 
-                      maxLength={15}
+                      <Field
+                        className={`form-control ${touched.healing && errors.healing && 'error'}`}
+                        type="text"
+                        name='healing'
+                        maxLength={15}
                       />
                       <ErrorMessage name='healing' component={() => (<FormReact.Text className="text-danger">{errors.healing}</FormReact.Text>)} />
                     </Col>

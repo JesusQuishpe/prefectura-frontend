@@ -1,5 +1,5 @@
 import axios from 'axios';
-import React, { useState, useEffect, useRef, useContext } from 'react'
+import React, { useState, useRef, useContext } from 'react'
 import { END_POINT } from '../../utils/conf';
 import { ModalEnfermeria } from './ModalEnfermeria';
 import { Button } from 'react-bootstrap';
@@ -14,12 +14,14 @@ import ToastContext from 'contexts/ToastContext';
 function Enfermeria() {
   //Refs
   const gridRef = useRef(null)
-
-  const initialData = [];
-  const [data, setData] = useState(initialData);
-  const [parametersModal, setParametersModal] = useState({});
-  const { openModal: openDeleteModal, closeModal: closeDeleteModal } = useDeleteModal()
+  //Contexts
   const { openToast } = useContext(ToastContext)
+  //States
+  const [data, setData] = useState([])
+  const [parametersModal, setParametersModal] = useState({})
+  //Custom Hooks
+  const { openModal: openDeleteModal, closeModal: closeDeleteModal } = useDeleteModal()
+  
 
   const Acciones = ({ data }) => {
     const handleDeleteClick = () => {
@@ -38,10 +40,14 @@ function Enfermeria() {
       </div>
     )
   }
+
+  /**
+   * Elimina un registro de enfermeria
+   * @param {number} appoId 
+   */
   const deleteRecord = async (appoId) => {
     try {
       await axios.delete(END_POINT + `enfermerias/${appoId}`)
-
       loadPatientQueue()
       closeDeleteModal()
       //console.log(props);
@@ -54,8 +60,9 @@ function Enfermeria() {
     }
   }
 
-
-  //Functions
+  /**
+   * Carga los pacientes que están en espera
+   */
   const loadPatientQueue = async () => {
     try {
       gridRef.current.api.showLoadingOverlay()
@@ -120,7 +127,10 @@ function Enfermeria() {
     }
   ]);
 
-
+  /**
+   * Muestra el modal para agregar los datos de enfermeria
+   * @param {object} data 
+   */
   const openModal = (data) => {
     setParametersModal({
       show: true,
@@ -128,6 +138,9 @@ function Enfermeria() {
     })
   };
 
+  /**
+   * Cierra el modal de enfermeria
+   */
   const closeModal = () => {
     setParametersModal({
       show: false,
@@ -135,6 +148,9 @@ function Enfermeria() {
     })
   }
 
+  /**
+   * Recarga los pacientes en espera
+   */
   const handleReload = () => {
     loadPatientQueue()
   }

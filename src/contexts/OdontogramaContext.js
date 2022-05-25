@@ -1,4 +1,4 @@
-import { createContext, forwardRef, useState, useImperativeHandle, useRef, useEffect, useContext } from "react"
+import { createContext, forwardRef, useState, useEffect, useContext } from "react"
 import OdontologyContext from "./OdontologyContext"
 
 const OdontogramaContext = createContext()
@@ -35,7 +35,7 @@ const formatMovilitiesRecessions = (movilitiesRecessions) => {
 const OdontogramaProvider = forwardRef(({ children }, ref) => {
   let { data } = useContext(OdontologyContext)
   const [optionSelected, setOptionSelected] = useState(null)
-  const [editedTeeth, setEditedTeeth] = useState(formatTeeth(data?.odontogram?.teeth))
+  const [editedTeeth, setEditedTeeth] = useState([])
   const [movilitiesRecessions, setMovilitiesRecessions] = useState(formatMovilitiesRecessions(data?.odontogram?.movilities_recessions))
   const [odontogramImageFile, setOdontogramImageFile] = useState(null)
   const [isOdontogramEmpty, setIsOdontogramEmpty] = useState(true)
@@ -110,12 +110,14 @@ const OdontogramaProvider = forwardRef(({ children }, ref) => {
     }
   }, [editedTeeth, movilitiesRecessions])
 
-
+  useEffect(() => {
+    setEditedTeeth(formatTeeth(data?.odontogram?.teeth))
+  }, [data])
 
   return (
     <OdontogramaContext.Provider value={{
-      id:data?.odontogram?.id || null,
-      teeth: data.teeth,
+      id: data?.odontogram?.id || null,
+      teeth: data?.teeth,
       optionSelected,
       editedTeeth,
       movilitiesRecessions,

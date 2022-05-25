@@ -3,15 +3,15 @@ import AreaService from 'services/AreaService';
 import { Alert, Button, Col, Container, Form, Row } from 'react-bootstrap';
 import { useParams } from 'react-router-dom';
 import ToastContext from '../../../contexts/ToastContext';
-import MyToast from 'components/MyToast';
-import { Loader } from 'components/Loader';
 import LoaderContext from 'contexts/LoaderContext';
 
 export const AreaForm = () => {
-  const { idArea } = useParams();
-  const isEdit = idArea ? true : false;
+  //Contexts
   const { openToast } = useContext(ToastContext)
   const { openLoader, closeLoader } = useContext(LoaderContext)
+  //Other hooks
+  const { idArea } = useParams();
+  const isEdit = idArea ? true : false;
   //States
   const initialForm = {
     code: "",
@@ -19,11 +19,13 @@ export const AreaForm = () => {
     price: ""
   }
   const [showAlert, setShowAlert] = useState(false)
-  //Estado para el formulario
   const [form, setForm] = useState(initialForm);
 
 
-
+  /**
+   * Handler para actualizar los valores del formulario
+   * @param {Event} e 
+   */
   const handleForm = (e) => {
     const { name, value } = e.target;
     setForm({
@@ -32,6 +34,11 @@ export const AreaForm = () => {
     });
   };
 
+  /**
+   * Handler para guardar los datos del area
+   * @param {Event} e 
+   * @returns 
+   */
   const handleSubmit = async (e) => {
     try {
       e.preventDefault()
@@ -60,6 +67,10 @@ export const AreaForm = () => {
     }
   };
 
+  /**
+   * Carga los valores del area en el formulario dado el id
+   * @param {number} id identificador del area
+   */
   const getAreaById = async (id) => {
     let area = await AreaService.getArea(id);
     setForm({ ...area });

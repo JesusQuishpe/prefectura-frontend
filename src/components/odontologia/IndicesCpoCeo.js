@@ -1,23 +1,21 @@
 import OdontologyContext from 'contexts/OdontologyContext';
-import React, { forwardRef, useState, useImperativeHandle, useContext } from 'react';
+import React, { forwardRef, useState, useImperativeHandle, useContext, useEffect } from 'react';
 import { Col, Form, FormGroup, Row } from 'react-bootstrap';
 
 const IndicesCpoCeo = forwardRef((props, ref) => {
   const { data } = useContext(OdontologyContext)
 
   const initialForm = {
-    cpo_c: data?.cpoCeoRatios?.cd || "",
-    ceo_c: data?.cpoCeoRatios?.ce || "",
-    cpo_p: data?.cpoCeoRatios?.pd || "",
-    ceo_e: data?.cpoCeoRatios?.ee || "",
-    cpo_o: data?.cpoCeoRatios?.od || "",
-    ceo_o: data?.cpoCeoRatios?.oe || "",
-    cpo_total: data?.cpoCeoRatios?.cpo_total || "",
-    ceo_total: data?.cpoCeoRatios?.ceo_total || "",
-    id: data?.cpoCeoRatios?.id || null
+    cpo_c: "",
+    ceo_c: "",
+    cpo_p: "",
+    ceo_e: "",
+    cpo_o: "",
+    ceo_o: "",
+    cpo_total: "",
+    ceo_total: "",
+    id: null
   }
-
-
   const [form, setForm] = useState(initialForm)
 
   const sumarIndices = (n1, n2, n3) => {
@@ -45,17 +43,33 @@ const IndicesCpoCeo = forwardRef((props, ref) => {
   })
 
   const convertEmptyToZero = () => {
-    let newData={...form}
+    let newData = { ...form }
     for (const key in newData) {
       if (Object.hasOwnProperty.call(newData, key)) {
         const element = newData[key];
-        if (!element && key!=="id") {
+        if (!element && key !== "id") {
           newData[key] = 0
         }
       }
     }
     return newData
   }
+
+  useEffect(() => {
+    if (data) {
+      setForm({
+        cpo_c: data?.cpoCeoRatios?.cd || "",
+        ceo_c: data?.cpoCeoRatios?.ce || "",
+        cpo_p: data?.cpoCeoRatios?.pd || "",
+        ceo_e: data?.cpoCeoRatios?.ee || "",
+        cpo_o: data?.cpoCeoRatios?.od || "",
+        ceo_o: data?.cpoCeoRatios?.oe || "",
+        cpo_total: data?.cpoCeoRatios?.cpo_total || "",
+        ceo_total: data?.cpoCeoRatios?.ceo_total || "",
+        id: data?.cpoCeoRatios?.id || null
+      })
+    }
+  }, [data])
 
   return (
     <>

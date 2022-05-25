@@ -1,29 +1,29 @@
 import { AgGridReact } from 'ag-grid-react';
 import 'ag-grid-community/dist/styles/ag-grid.css';
 import 'ag-grid-community/dist/styles/ag-theme-alpine.css';
-import React, { useEffect, useRef, useState } from 'react'
-import { Alert, Button, Card, Col, Form, FormControl, InputGroup, Row } from 'react-bootstrap'
-import { Link, useNavigate } from 'react-router-dom'
+import React, { useRef, useState } from 'react'
+import { Alert, Button, Col, Form, FormControl, InputGroup, Row } from 'react-bootstrap'
+import { useNavigate } from 'react-router-dom'
 import { AiFillEdit } from 'react-icons/ai'
-import { VscFilePdf } from 'react-icons/vsc'
 import OdontologyService from 'services/OdontologyService';
-import { END_POINT, URL_HOST } from 'utils/conf';
+import { END_POINT} from 'utils/conf';
 import PDFIcon from 'assets/svg/pdf.svg'
 
 const Acciones = ({ data }) => {
   console.log(data);
   const navigate = useNavigate()
   const handleClick = () => {
-    navigate(`/odontologia/cita/${data.appo_id}/enfermeria/${data.nur_id}/ficha/${data.rec_id}`)
+    navigate(`/odontologia/historial/${data.rec_id}/editar`)
   }
   return (
     <div className='d-flex'>
       <Button onClick={handleClick} className='me-2'><AiFillEdit /></Button>
       <a
         className='btn btn-danger'
-        href={END_POINT + `historial/cita/${data.appo_id}/enfermeria/${data.nur_id}/ficha/${data.rec_id}`}
+        href={END_POINT + `odontologia/pdf/${data.rec_id}`}
         target='_blank'
-      ><img src={PDFIcon} width="20px" height={"20px"} /></a>
+        rel='noreferrer'
+      ><img src={PDFIcon} width="20px" height={"20px"} alt="pdf-icon.svg"/></a>
 
     </div>
   )

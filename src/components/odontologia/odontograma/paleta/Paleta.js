@@ -1,12 +1,13 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useState } from 'react';
 import SimboloItem from './SimboloItem';
 import LimpiarIcono from 'assets/svg/clean.svg';
-import OdontogramaContext from 'contexts/OdontogramaContext';
 import OdontologyService from 'services/OdontologyService';
+import OdontogramContext from 'contexts/OdontogramContext';
 
 export const Paleta = () => {
-  const { optionSelected, updateOption } = useContext(OdontogramaContext)
   const [symbologies, setSymbologies] = useState(null);
+  const { updateOptionSelected, optionSelected } = useContext(OdontogramContext)
+
 
   const getSymbologies = async () => {
     let symbologiesFromService = await OdontologyService.getSymbologies()
@@ -17,11 +18,14 @@ export const Paleta = () => {
     getSymbologies();
   }, []);
 
-  const onOptionClick = (e, params) => {
-    console.log(e.target, params);
-    updateOption(params)//Actualizamos el contexto
-  }
-
+  const onOptionClick = useCallback(
+    (e, params) => {
+      console.log(e.target, params);
+      updateOptionSelected(params)//Actualizamos el contexto
+    },
+    [updateOptionSelected],
+  )
+  
   return (
     <>
       <div className='paleta-container'>
@@ -53,14 +57,14 @@ export const Paleta = () => {
           </div>
           <div>
             <p className='fw-bold mb-2'>Limpiar</p>
-            <div className='d-flex justify-content-center align-items-center border p-3 btn-limpiar' 
-            onClick={(e) => onOptionClick(e,{ type: "limpiar", data: {  name: "limpiar",path:"" } })}>
-              <img src={LimpiarIcono} width={"24px"} />
+            <div className='d-flex justify-content-center align-items-center border p-3 btn-limpiar'
+              onClick={(e) => onOptionClick(e, { type: "limpiar", data: { name: "limpiar", path: "" } })}>
+              <img src={LimpiarIcono} width={"24px"} alt="Limpiar icono" />
             </div>
           </div>
         </div>
       </div>
 
     </>
-  );
-};
+  )
+}

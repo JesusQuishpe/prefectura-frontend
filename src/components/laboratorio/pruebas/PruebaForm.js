@@ -1,20 +1,21 @@
 import React, { useContext, useEffect, useState } from 'react';
 import PruebaService from 'services/PruebaService';
-import { Alert, Button, Col, Container, Form, Row } from 'react-bootstrap';
+import { Button, Col, Container, Form, Row } from 'react-bootstrap';
 import { useParams } from 'react-router-dom';
 import ToastContext from '../../../contexts/ToastContext';
-import MyToast from 'components/MyToast';
-import { Loader } from 'components/Loader';
 import Select from 'react-select'
-import AreaService from 'services/AreaService';
 import GrupoService from 'services/GrupoService';
 import UnidadService from 'services/UnidadService';
 import { getOperandosDeFormula } from 'utils/utilidades';
 import LoaderContext from 'contexts/LoaderContext';
 import CalculatorIcon from 'assets/png/calculator.png'
-
 import { ModalFormula } from './ModalFormula';
 
+/**
+ * Convierte la data en un objeto aceptable para el select
+ * @param {object} data 
+ * @returns Array
+ */
 const optionsFun = (data) => {
   let opts = []
   opts = data.map((item) => {
@@ -26,6 +27,12 @@ const optionsFun = (data) => {
   return opts
 }
 
+/**
+ * Convierte la data en un objeto aceptable para el select segun el criterio pasado
+ * @param {object} data 
+ * @param {callback} criterio 
+ * @returns Array
+ */
 const convertirDatosParaSelect = (data, criterio) => {
   let opts = []
 
@@ -37,13 +44,14 @@ const convertirDatosParaSelect = (data, criterio) => {
 }
 
 export const PruebaForm = () => {
-  const { idPrueba } = useParams();
-  const isEdit = idPrueba ? true : false;
+  //Contexts
   const { openToast } = useContext(ToastContext)
+  const { openLoader, closeLoader } = useContext(LoaderContext)
+  //Other hooks
+  const { idPrueba } = useParams()
+  //States
   const [options, setOptions] = useState([])
   const [unidades, setUnidades] = useState([])
-  const { openLoader, closeLoader } = useContext(LoaderContext)
-  //States
   const initialForm = {
     selected_group: null,
     selected_measure: null,
@@ -67,13 +75,15 @@ export const PruebaForm = () => {
     formula: "",
     notes: ""
   }
-
-  //Estado para el formulario
-  const [form, setForm] = useState(initialForm);
-
-  //Estado para la busqueda de pacientes
+  const [form, setForm] = useState(initialForm)
   const [showModalFormula, setShowModalFormula] = useState(false)
 
+  const isEdit = idPrueba ? true : false
+
+  /**
+   * Handler para actualizar los valores del formulario
+   * @param {Event} e 
+   */
   const handleForm = (e) => {
     const { name, value } = e.target;
     console.log(name);
@@ -120,8 +130,12 @@ export const PruebaForm = () => {
       });
     }
 
-  };
+  }
 
+  /**
+   * Handler para actualizar el valor del check del formulario
+   * @param {Event} e 
+   */
   const handleCheck = (e) => {
     const { name, checked } = e.target;
     setForm({
@@ -130,6 +144,10 @@ export const PruebaForm = () => {
     });
   }
 
+  /**
+   * Carga los datos de la prueba por su id
+   * @param {number} id idenficador unico de la prueba
+   */
   const getTestById = async (id) => {
     let test = await PruebaService.getPrueba(id);
     console.log(test);
@@ -161,12 +179,16 @@ export const PruebaForm = () => {
     //setAreaSeleccionada({ value: test.area.id, label: test.area.name })
   }
 
+  /**
+   * Carga todos los grupos de laboratorio en el select de grupo del formulario
+   */
   const getGrupos = async () => {
     let gruposFromService = await GrupoService.getGrupos()
-    console.log(gruposFromService);
     setOptions(optionsFun(gruposFromService))
   }
-
+  /**
+    * Carga todas las unidades de medida de laboratorio en el select de medidas del formulario
+    */
   const getUnidades = async () => {
     let unidadesFromService = await UnidadService.getUnidades()
     //console.log(unidadesFromService);
@@ -179,18 +201,28 @@ export const PruebaForm = () => {
     if (isEdit) {
       getTestById(idPrueba);
     }
-  }, []);
+  }, [])
 
-  const handleSelectGrupo = (value) => {
-    setForm({ ...form, selected_group: value })
+  /**
+   * Handler para el select grupo del formulario
+   * @param {{label,value}} selected valor seleccionado del select 
+   */
+  const handleSelectGrupo = (selected) => {
+    setForm({ ...form, selected_group: selected })
+  }
+  /**
+    * Handler para el select unidades de medida del formulario
+    * @param {{label,value}} selected valor seleccionado del select 
+    */
+  const handleSelectUnidad = (selected) => {
+    setForm({ ...form, selected_measure: selected })
   }
 
-  const handleSelectUnidad = (value) => {
-    setForm({ ...form, selected_measure: value })
-  }
-
-
-
+  /**
+   * Crea o actualiza la prueba en la BD
+   * @param {Event} e 
+   * @returns 
+   */
   const handleSubmit = async (e) => {
     try {
       e.preventDefault()
@@ -242,10 +274,21 @@ export const PruebaForm = () => {
         error.response.data.exception_message
       openToast(message, false)
     }
-  };
+  }
+
+  /**
+   * Cierra el modal formula
+   */
+  const closeModalFormula = () => { setShowModalFormula(false) }
+  
+  /**
+   * Actualiza el valor de la formula en el formulario
+   * @param {string} formula 
+   */
+  const saveFormula = (formula) => { setForm({ ...form, formula }) }
 
   return (
-    <div className='pt-4'>
+    <div className='p-4'>
       <Container className='w-75 mx-auto'>
         <h3 className='my-3 text-center mb-4'>{isEdit ? "ACTUALIZAR PRUEBA" : "NUEVA PRUEBA"}</h3>
         <Form>
@@ -501,8 +544,8 @@ export const PruebaForm = () => {
       </Container>
       <ModalFormula
         show={showModalFormula}
-        saveFormula={(formula) => setForm({ ...form, formula })}
-        closeModal={() => setShowModalFormula(false)} />
+        saveFormula={saveFormula}
+        closeModal={closeModalFormula} />
     </div>
   )
 }

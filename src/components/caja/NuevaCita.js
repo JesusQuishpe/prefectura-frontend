@@ -1,13 +1,9 @@
-import axios from 'axios';
 import ToastContext from 'contexts/ToastContext';
 import { useUser } from 'hooks/useUser';
 import React, { useState, useRef, useContext } from 'react'
 import { Alert, Button, Col, Form, FormControl, InputGroup, Row, Spinner, } from 'react-bootstrap'
 import QRCode from 'react-qr-code';
-import { Link } from 'react-router-dom';
 import PatientService from 'services/PatientService';
-import { END_POINT } from 'utils/conf';
-import { Loader } from '../Loader';
 import { AiFillDelete } from 'react-icons/ai';
 //import { MyDocumentQR } from './MyDocumentQR';
 import { AgGridReact } from 'ag-grid-react';
@@ -19,12 +15,27 @@ import { AreaModal } from 'components/laboratorio/nueva-consulta/AreaModal';
 import { formatNumber } from 'utils/utilidades'
 import LoaderContext from 'contexts/LoaderContext';
 import CajaService from 'services/CajaService';
+import { Link } from 'react-router-dom';
 
 
 const AREA_PRICES = {
   "Medicina": 20,
   "Odontologia": 2,
-  "Laboratorio": 0
+  "Laboratorio": 0,
+  "Pediatria": 0,
+  "Ginecologia": 0,
+  "Reumatologia": 0,
+  "Dermatologia": 0,
+  "Terapia Energetica": 0,
+  "Terapia Fisica": 0,
+  "Terapia Respiratoria": 0,
+  "Cardiologia": 0,
+  "Alergologia": 0,
+  "Psicologia": 0,
+  "Inyeccion": 0,
+  "Curacion": 0,
+  "Presion Arterial": 0,
+  "Ecografia": 0,
 }
 
 
@@ -43,10 +54,13 @@ function NuevaCita() {
   //References
   const gridRef = useRef(null)
   const inputCedula = useRef();
-  const { user } = useUser()
   const formRef = useRef();
+  //Custom hooks
+  const { user } = useUser()
+  //Contexts
   const { openToast } = useContext(ToastContext)
   const { openLoader, closeLoader } = useContext(LoaderContext)
+
   //States
   const initialForm = {
     identification_number: "",
@@ -59,21 +73,19 @@ function NuevaCita() {
     area: "Medicina",
     value: 20,
   }
-
-  //States
   const [showPruebasModal, setShowPruebasModal] = useState(false)
   const [showAreasModal, setShowAreasModal] = useState(false)
-
-  //Estado para el formulario
   const [form, setForm] = useState(initialForm);
-  //Estado para la busqueda de pacientes
   const [isDisabledForm, setIsDisabledForm] = useState(false);
   const [isFinishSearch, setIsFinishSearch] = useState(true);
   const [hiddenAlert, setHiddenAlert] = useState(true);
-  const [showPdfQr, setShowPdfQr] = useState(false)
+  //const [showPdfQr, setShowPdfQr] = useState(false)
   const [showPatientNotFoundAlert, setShowPatientNotFoundAlert] = useState(false)
 
-
+  /**
+   * Devuelve los datos del ag-grid
+   * @returns Array
+   */
   const getRowData = () => {
     let rowData = []
     gridRef.current?.api?.forEachNode(node => {
@@ -81,11 +93,17 @@ function NuevaCita() {
     })
     return rowData
   }
-
+  /**
+   * Setea nuevos datos en el ag-grid
+   * @param {Array} rowData 
+   */
   const setRowData = (rowData) => {
     gridRef.current.api.setRowData(rowData)
   }
-
+  /**
+   * Elimina una prueba del ag-grid y actualiza el valor de la cita
+   * @param {number} id 
+   */
   const deleteTestOfPatient = (id) => {
     const newStore = getRowData().filter(data => data.id !== id)
     const total = newStore.reduce((acc, current) => {
@@ -130,9 +148,10 @@ function NuevaCita() {
       }
     }
   ])
-
-
-  //Handle
+  /**
+   * Handler para actualizar los valores del formulario
+   * @param {Event} e 
+   */
   const handleForm = (e) => {
     const { name, value: newValue } = e.target;
     if (name === "area") {
@@ -145,17 +164,24 @@ function NuevaCita() {
     }
   };
 
+  /**
+   * Handler para el evento OnSubmit del formulario
+   * @param {Event} e 
+   */
   const handleSubmit = (e) => {
     e.preventDefault()
     save();
   };
 
+  /**
+   * Handler para buscar el paciente por cedula
+   * @param {Event} e 
+   */
   const handleSearch = async (e) => {
     try {
       e.preventDefault();
       setIsFinishSearch(false);
       let patient = await PatientService.getPatientByIdentification(inputCedula.current.value)
-      console.log(patient);
       setForm({
         ...form,
         patient_id: patient.id,
@@ -184,8 +210,12 @@ function NuevaCita() {
     }
   };
 
-
-  const save = async () => {
+  /**
+   * Guarda la cita y las pruebas seleccionadas en caso del area Laboratorio
+   * @param {Event} e
+   * @returns 
+   */
+  const save = async (e) => {
     try {
       //console.log(form.testsOfPatient);
       if (!form.identification_number) {
@@ -196,7 +226,7 @@ function NuevaCita() {
         }, 2000)
         return
       }
-      if(!form.value){
+      if (!form.value) {
         return alert("Ingrese un valor para la cita")
       }
       openLoader("Guardando cita...")
@@ -204,7 +234,7 @@ function NuevaCita() {
         ...form, testsOfPatient: getRowData()
       });
       //console.log(user);
-      await CajaService.saveCita({ ...form, user_id: user.id, tests: getRowData(),initial_value:form.value })
+      await CajaService.saveCita({ ...form, user_id: user.id, tests: getRowData(), initial_value: form.value })
       setForm(initialForm)
       setIsDisabledForm(false)
       closeLoader()
@@ -218,6 +248,11 @@ function NuevaCita() {
     }
   }
 
+  /**
+   * Agrega una prueba al ag-grid
+   * @param {object} test 
+   * @returns 
+   */
   const addTestToOrder = (test) => {
     const exists = getRowData().some(testOfPat => testOfPat.id === test.id)
     if (exists) {
@@ -230,11 +265,15 @@ function NuevaCita() {
     const total = newStore.reduce((acc, current) => {
       return acc + current.price
     }, 0)
-    console.log(total);
     setForm({ ...form, value: total })
     setRowData(newStore)
   }
 
+  /**
+   * Agrega todas las pruebas del area(examen) seleccionada al ag-grid
+   * @param {object} area 
+   * @returns 
+   */
   const addTestsToOrderFromArea = (area) => {
     console.log(area);
     if (area.groups.length === 0) return alert("El area no tiene ningun grupo, no puede ser asignada...")
@@ -255,11 +294,9 @@ function NuevaCita() {
     const total = newTests.reduce((acc, current) => {
       return acc + current.price
     }, 0)
-    console.log(total);
-    console.log(newTests);
+   
     setForm({ ...form, value: total })
     setRowData(newTests)
-    //setTestsOfPatient([...testsOfPatient, ...testsToAdd])
   }
 
   return (
@@ -267,7 +304,7 @@ function NuevaCita() {
       {
         <div className='p-4'>
           <div>
-            <h1 className='fw-bold'>NUEVA CITA</h1>
+            <h3 className='fw-bold'>NUEVA CITA</h3>
             <div className='d-flex justify-content-end mb-3'>
               <Link
                 to={"/pacientes/nuevo"}
@@ -365,14 +402,14 @@ function NuevaCita() {
               </Form.Group>
 
               {
-                /*form.cedula !== "" && (<Form.Group as={Row} className="mb-3" controlId="qr">
+                form.identification_number !== "" && (<Form.Group as={Row} className="mb-3" controlId="qr">
                   <Form.Label column sm={4} className='text-start'>
                     Código QR:
                   </Form.Label>
                   <Col sm={8}>
-                    <QRCode value={form.cedula} size={48} style={{ cursor: "pointer" }} />
+                    <QRCode value={form.identification_number} size={48} style={{ cursor: "pointer" }} />
                   </Col>
-                </Form.Group>)*/
+                </Form.Group>)
               }
 
             </div>
@@ -390,7 +427,7 @@ function NuevaCita() {
               </Form.Label>
               <Col>
                 <Form.Select sm={8} aria-label="Select para area" name='area' value={form.area} onChange={handleForm} >
-                  
+
                   <option>Medicina</option>
                   <option>Pediatria</option>
                   <option>Ginecologia</option>

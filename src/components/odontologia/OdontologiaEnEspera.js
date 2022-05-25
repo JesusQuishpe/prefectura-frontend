@@ -1,5 +1,5 @@
 import axios from 'axios';
-import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useContext, useRef, useState } from 'react';
 import { Button, Card } from 'react-bootstrap';
 import { AiFillDelete, AiFillFileAdd,AiOutlineReload  } from 'react-icons/ai';
 import { Link } from 'react-router-dom';
@@ -43,7 +43,7 @@ export const OdontologiaEnEspera = () => {
     return (
       <div className='d-flex flex-nowrap'>
         <Link className='btn btn-primary me-2'
-          to={`/odontologia/cita/${data.appo_id}/nuevo`}
+          to={`/odontologia/citas/${data.appo_id}/nuevo`}
 
         ><AiFillFileAdd /></Link>
         <Button variant='danger' onClick={handleDeleteClick}><AiFillDelete /></Button>

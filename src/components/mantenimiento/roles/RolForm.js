@@ -1,38 +1,45 @@
-import axios from 'axios';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import React, { useContext, useEffect, useState } from 'react';
 import { Button, Form as FormReact } from 'react-bootstrap';
 import { useParams } from 'react-router-dom';
 import * as Yup from 'yup';
 import ToastContext from 'contexts/ToastContext';
-import { END_POINT } from 'utils/conf';
-
+import RolService from 'services/RolService';
 
 export const RolForm = () => {
-  const { idRol } = useParams();
-  const isEdit = idRol ? true : false;
+  //Contexts
   const { openToast } = useContext(ToastContext);
-
+  //Other hooks
+  const { idRol } = useParams();
+  //States
   const initialForm = {
     name: ""
   }
-
   const [form, setForm] = useState(initialForm);
 
+  const isEdit = idRol ? true : false;
+
+  /**
+   * Crea el rol en la BD
+   * @param {object} rol 
+   */
   const createRole = async (rol) => {
     try {
-      await axios.post(END_POINT + "roles", rol);
+      await RolService.crearRol(rol)
       openToast("Registro creado", true);
     } catch (error) {
       openToast("No se pudo crear el registro", false);
       console.log(error);
     }
-
   }
 
-  const updateRole = async (values) => {
+  /**
+   * Actualiza el rol en la BD
+   * @param {object} rol 
+   */
+  const updateRole = async (rol) => {
     try {
-      await axios.put(END_POINT + `roles/${idRol}`, values);
+      await RolService.actualizarRol(rol)
       openToast("Registro actualizado", true);
     } catch (error) {
       openToast("No se pudo actualizar el registro", false);
@@ -41,8 +48,12 @@ export const RolForm = () => {
 
   }
 
+  /**
+   * Carga la informacion del rol dado el id
+   * @param {number} id 
+   */
   const getRolById = async (id) => {
-    let response = await axios.get(END_POINT + `roles/${id}`);
+    let response = await RolService.getRol(id)
     let { name } = response.data.data;
     console.log(name);
     setForm({ name });
@@ -77,7 +88,7 @@ export const RolForm = () => {
             } else {
               await updateRole(values);
             }
-            resetForm({ values: initialForm });
+            resetForm({ values: initialForm, errors: {} });
           }}
         >
           {

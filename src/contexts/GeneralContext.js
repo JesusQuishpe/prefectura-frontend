@@ -84,8 +84,8 @@ const GeneralProvider = forwardRef(({ children }, ref) => {
 
   let dataForProvider = {
     generalData,
-    diseaseList: data.diseaseList,
-    pathologies: data.pathologies,
+    diseaseList: data?.diseaseList,
+    pathologies: data?.pathologies,
     handleFamilyHistoryChange,
     handlePathologiesChange,
     handleDescription

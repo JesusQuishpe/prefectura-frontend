@@ -6,14 +6,11 @@ import { formatNumber, roundToTwo } from 'utils/utilidades'
 import { AgGridReact } from 'ag-grid-react';
 import 'ag-grid-community/dist/styles/ag-grid.css';
 import 'ag-grid-community/dist/styles/ag-theme-alpine.css';
-import { Loader } from 'components/Loader'
 import { END_POINT } from 'utils/conf'
 import ToastContext from 'contexts/ToastContext'
 import LoaderContext from 'contexts/LoaderContext'
 
 const Parser = require('expr-eval').Parser;
-
-const currencyFormatter = (params) => formatNumber(params.value)
 
 const addIsFirstTimePropertyToData = (tests) => {
   return tests.map(test => ({
@@ -24,13 +21,15 @@ const addIsFirstTimePropertyToData = (tests) => {
 }
 
 export const ResultadoForm = () => {
-  let { idResultado } = useParams()
   //Refs
   const gridRef = useRef(null)
-  //States
-  const [tests, setTests] = useState([])
+  //Contexts
   const { openLoader, closeLoader } = useContext(LoaderContext)
   const { openToast } = useContext(ToastContext)
+  //Other hooks
+  let { idResultado } = useParams()
+  //States
+  const [tests, setTests] = useState([])
   const initialForm = {
     order_id: "",
     identification_number: "",
@@ -43,9 +42,9 @@ export const ResultadoForm = () => {
     order_items: 0,
     order_total: 0
   }
-
   const [form, setForm] = useState(initialForm);
-
+  
+  //Coldefs para ag-grid
   const columnDefs = useMemo(() => [
     {
       headerName: "Código",
@@ -177,8 +176,10 @@ export const ResultadoForm = () => {
     }
   ], [form]);
 
-
-
+  /**
+   * Carga los resultados de la orden por id
+   * @param {number} id identificador del resultado
+   */
   const cargarResultado = useCallback(
     async (id) => {
       let result = await CapturaService.getCaptura(id)
@@ -210,7 +211,7 @@ export const ResultadoForm = () => {
    * Devuelve un objeto con los operandos y sus valores
    * @param {Event} e evento del dataGrid
    * @param {*} nodeParam 
-   * @returns 
+   * @returns object | Array
    */
   const getValoresDeOperandos = (e, nodeParam) => {
     const valores = {}
@@ -220,7 +221,7 @@ export const ResultadoForm = () => {
     e.api.forEachNode(node => {
       //Si el nodo(fila) codigo está en los operandos
       if (operands.some(oper => oper === node.data.code)) {
-        valores[node.data.code] = parseFloat(node.data.result)
+        valores[node.data.code] = parseFloat(node.data.result)//Validar cuando es undefined, vacio y NAN
       }
     })
     const keys = Object.keys(valores)
@@ -229,7 +230,7 @@ export const ResultadoForm = () => {
         return oper
       }
     })
-    console.log(operands, keys, operandsNotFound);
+    console.log(operands, keys, operandsNotFound, valores);
 
     return operandsNotFound.length > 0 ? operandsNotFound : valores
   }
@@ -246,8 +247,6 @@ export const ResultadoForm = () => {
     if (is_numeric !== 1) return
     //Si es un campo que tiene formula entonces evitamos el cellchange
     if (formula) return
-    //console.log(e.data.result);
-    //console.log("PASA", isNaN(e.data.result));
     //Si no es un numero, cambiamos a undefined los nodos que incluyen el codigo en su formula
     if (isNaN(e.data.result)) {
       e.api.forEachNode(node => {
@@ -268,7 +267,7 @@ export const ResultadoForm = () => {
       ) {
         //Buscar valores de los operandos de la formula en las pruebas
         const valores = getValoresDeOperandos(e, node)
-        if (Array.isArray(valores)) {//Faltan operandos
+        if (Array.isArray(valores)) {//Si es array entonces faltan operandos
           node.setDataValue('resultado', "Incalculable: " + valores.join(','))
         } else {
           const parser = new Parser();
@@ -281,6 +280,10 @@ export const ResultadoForm = () => {
 
   }
 
+  /**
+   * Actualiza los valores de las pruebas en la BD
+   * @returns 
+   */
   const guardarCambios = async () => {
     console.log(tests);
     //Preparar array solo con los datos necesarios
@@ -302,7 +305,7 @@ export const ResultadoForm = () => {
       let captura = {
         result_id: idResultado,
         tests: testsConverted
-      }
+      } 
       console.log(captura);
       await CapturaService.actualizarCaptura(captura)
       openToast("Resultados actualizados correctamente", true)
@@ -316,7 +319,6 @@ export const ResultadoForm = () => {
       let message = error.response.data.message ? error.response.data.message : error.response.data.exception_message
       openToast(message, false)
     }
-
   }
 
   return (
@@ -334,7 +336,7 @@ export const ResultadoForm = () => {
       </div>
       <Row>
         <Col>
-          <div className='border p-2 bg-light mb-3'>Datos del patient</div>
+          <div className='border p-2 bg-light mb-3'>Datos del paciente</div>
           <Form.Group as={Row} className="m-0" controlId="identification_number">
             <Form.Label column sm={4} className='text-start'>
               Cédula:
@@ -426,7 +428,7 @@ export const ResultadoForm = () => {
           rowData={tests}
           columnDefs={columnDefs}
           rowSelection={'single'}
-          //onSelectionChanged={onSelectionChanged}
+          debounceVerticalScrollbar={true}
           pagination
           onCellValueChanged={handleCellChange}
         >

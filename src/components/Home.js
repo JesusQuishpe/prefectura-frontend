@@ -10,7 +10,7 @@ import { Loader } from './Loader'
 
 
 export const Home = () => {
-console.log("HOME");
+
   const navigate = useNavigate();
 
   const { isLogged } = useUser();
@@ -26,13 +26,12 @@ console.log("HOME");
       }
       <div
         style={{
-          minHeight: "calc(100vh - 56px)",
-          height: "calc(100vh - 56px)",
+          position:"absolute",
+          top:"56px",
+          left:0,
           width: "100%",
-          position: "relative",
-          top: 56,
-          left: 0,
-          overflow: "auto"
+          height:"calc(100vh - 56px)"
+          //overflow: "auto"
         }}
         id='home'>
         <Outlet />

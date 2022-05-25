@@ -6,7 +6,6 @@ import 'bootstrap/dist/js/bootstrap.js';
 import Enfermeria from './components/enfermeria/Enfermeria';
 import { Login } from './components/login/Login';
 import { Home } from './components/Home';
-import { Medicina } from './components/medicina/Medicina';
 import { Cambios } from './components/caja/Cambios';
 import { OdontologiaEnEspera } from './components/odontologia/OdontologiaEnEspera';
 import { OdontologiaFicha } from './components/odontologia/OdontologiaFicha';
@@ -41,6 +40,7 @@ import { MedicinaForm } from 'components/medicina/MedicinaForm';
 import { DeleteModalProvider } from 'contexts/DeleteModalContext';
 import { LoaderProvider } from 'contexts/LoaderContext';
 import { NotFound } from 'components/NotFound';
+import { EnfermeriaHistorial } from 'components/enfermeria/EnfermeriaHistorial';
 
 
 function App() {
@@ -113,16 +113,27 @@ function App() {
                     />
 
                     <Route
-                      path="enfermeria"
+                      path="enfermeria/citas"
                       element={
                         <VerificarAuthYPermisos>
                           <Enfermeria />
                         </VerificarAuthYPermisos>
                       } />
+                    <Route
+                      path="enfermeria/historial"
+                      element={
+                        <VerificarAuthYPermisos>
+                          <EnfermeriaHistorial />
+                        </VerificarAuthYPermisos>
+                      } />
 
-                    <Route path="medicina" element={<Medicina />}>
+                    <Route path="medicina" element={
+                      <VerificarAuthYPermisos>
+                        <Outlet />
+                      </VerificarAuthYPermisos>
+                    }>
                       <Route
-                        path="pacientes"
+                        path="citas"
                         element={
                           <VerificarAuthYPermisos>
                             <MedicinaEnEspera />
@@ -152,10 +163,12 @@ function App() {
                     </Route>
 
                     <Route path="odontologia" element={
-                      <Outlet />
+                      <VerificarAuthYPermisos>
+                        <Outlet />
+                      </VerificarAuthYPermisos>
                     }
                     >
-                      <Route path='pacientes' element={
+                      <Route path='citas' index element={
                         <VerificarAuthYPermisos>
                           <OdontologiaEnEspera />
                         </VerificarAuthYPermisos>
@@ -163,7 +176,7 @@ function App() {
                       />
 
                       <Route
-                        path="fichas"
+                        path="historial"
                         element={
                           <VerificarAuthYPermisos>
                             <ConsultarHistorial />
@@ -172,7 +185,7 @@ function App() {
                       />
 
                       <Route
-                        path="cita/:appoId/nuevo"
+                        path="citas/:appoId/nuevo"
                         element={
                           <VerificarAuthYPermisos>
                             <OdontologyProvider>
@@ -183,7 +196,7 @@ function App() {
                       />
 
                       <Route
-                        path="cita/:appoId/enfermeria/:nurId/ficha/:recId"
+                        path="historial/:recId/editar"
                         element={
                           <VerificarAuthYPermisos>
                             <OdontologyProvider>

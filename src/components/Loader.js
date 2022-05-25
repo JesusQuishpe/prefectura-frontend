@@ -3,7 +3,6 @@ import React, { useContext } from 'react'
 import { Spinner } from 'react-bootstrap';
 import '../css/Loader.css';
 export const Loader = () => {
-  console.log("RENDER LOADER");
   const { parameters } = useContext(LoaderContext)
   return (
     <>

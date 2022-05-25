@@ -8,23 +8,26 @@ import { useParams } from 'react-router-dom';
 import MedidaService from 'services/MedidaService'
 
 export const MedidaForm = () => {
-  const { idMedida } = useParams();
-  const isEdit = idMedida ? true : false;
+  //Contexts 
   const { openToast } = useContext(ToastContext)
   const { openLoader, closeLoader } = useContext(LoaderContext)
+  //Other hooks
+  const { idMedida } = useParams();
   //States
   const initialForm = {
     name: "",
     abbreviation: ""
-  }
-
-  //Estado para el formulario
-  const [form, setForm] = useState(initialForm);
-
-  //Estado para la busqueda de pacientes
+  }  
+  const [form, setForm] = useState(initialForm);  
   const [showLoader, setShowLoader] = useState({});
   const [showAlert, setShowAlert] = useState(false)
+  
+  const isEdit = idMedida ? true : false;
 
+  /**
+   * Handler para actualizar los valores del formulario
+   * @param {Event} e 
+   */
   const handleForm = (e) => {
     const { name, value } = e.target;
     setForm({
@@ -33,6 +36,11 @@ export const MedidaForm = () => {
     });
   };
 
+  /**
+   * Handler para crear o actualizar los datos en la BD
+   * @param {Event} e 
+   * @returns 
+   */
   const handleSubmit = async (e) => {
     try {
       e.preventDefault()
@@ -59,8 +67,12 @@ export const MedidaForm = () => {
         error.response.data.exception_message
       openToast(message, false)
     }
-  };
+  }
 
+  /**
+   * Carga los valores de la unidad de medida dado su id
+   * @param {number} id identificador de la medida
+   */
   const getMedidaById = async (id) => {
     let medida = await MedidaService.getMedida(id);
     setForm({
@@ -78,7 +90,6 @@ export const MedidaForm = () => {
 
   return (
     <div className='pt-4'>
-      <Loader parameters={showLoader} />
       <Container className='w-50 mx-auto'>
         <h3 className='my-3 text-center mb-4'>{isEdit ? "ACTUALIZAR UNIDAD DE MEDIDA" : "CREAR UNIDAD DE MEDIDA"}</h3>
         <Form onSubmit={handleSubmit}>
@@ -112,9 +123,7 @@ export const MedidaForm = () => {
           </Form.Group>
           <Button variant='primary' type='submit' className='float-end'>{isEdit ? "Actualizar" : 'Guardar'}</Button>
         </Form>
-        <MyToast />
       </Container>
-
     </div>
   )
 };

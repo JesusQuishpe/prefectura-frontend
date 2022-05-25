@@ -16,27 +16,30 @@ const paginationConfig = {
   selectAllRowsItemText: "Todos"
 }
 
+const Acciones = ({ row }) => {
+  const navigate = useNavigate();
+
+  const editarClick = () => {
+    navigate(`editar/${row.id}`);
+  }
+  return (
+    <div className='d-flex flex-nowrap'>
+      <Button variant='primary' className='me-2' onClick={editarClick}><AiFillEdit /></Button>
+      <Button variant='danger'><AiFillDelete /></Button>
+    </div>
+  )
+}
+
 export const PacienteDashboard = () => {
+  //Refs
+  const tableRef = useRef()
+  const inputRef = useRef();
+  //Contexts
+  const { openToast } = useContext(ToastContext)
+  //States
   const [patients, setPatients] = useState([]);
   const [pending, setPending] = useState(true);
   const [page, setPage] = useState(1);
-  const tableRef = useRef()
-  const inputRef = useRef();
-  const { openToast } = useContext(ToastContext)
-  const navigate = useNavigate();
-
-  const Acciones = ({ row }) => {
-    const editarClick = () => {
-      navigate(`editar/${row.id}`);
-    }
-    return (
-      <div className='d-flex flex-nowrap'>
-        <Button variant='primary' className='me-2' onClick={editarClick}><AiFillEdit /></Button>
-        <Button variant='danger'><AiFillDelete /></Button>
-      </div>
-    )
-  }
-
   const columns = [
     {
       name: "Id",
@@ -73,13 +76,14 @@ export const PacienteDashboard = () => {
       ignoreRowClick: true,
     }
   ];
-  //document.getElementById("home").scrollTo({top:tableRef.current.scrollTop})
-  //console.log(tableRef.current?.offsetTop);
-  const getPatients = async () => {
+
+  /**
+   * Carga los pacientes paginados
+   */
+  const loadPatients = async () => {
     try {
       setPending(true)
       let patientsFromService = await PatientService.getPatients(page);
-      console.log(patientsFromService)
       setPatients(patientsFromService)
       setPending(false)
     } catch (error) {
@@ -88,10 +92,16 @@ export const PacienteDashboard = () => {
     }
   }
 
+  /**
+   * Carga los pacientes cuando la page del ag-grid cambia
+   */
   useEffect(() => {
-    getPatients();
+    loadPatients();
   }, [page]);
 
+  /**
+   * Handler para buscar un paciente por numero de cedula
+   */
   const handleSubmit = async (e) => {
     try {
       e.preventDefault()
@@ -104,9 +114,12 @@ export const PacienteDashboard = () => {
       openToast("Ha ocurrido un error inesperado...", false)
     }
   }
-
+  /**
+   * Handler para cargar todos los pacientes y establecer la page en  1
+   */
   const handleShowAllClick = () => {
-    getPatients()
+    setPage(1)
+    loadPatients()
   }
 
   return (

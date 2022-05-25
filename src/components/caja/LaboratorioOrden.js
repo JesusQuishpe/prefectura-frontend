@@ -1,36 +1,20 @@
 import React, { useRef, useState } from 'react'
 import { Button } from 'react-bootstrap'
-import DataTable from 'react-data-table-component';
 import { formatNumber } from 'utils/utilidades'
-import { AiFillDelete, AiFillEdit, AiFillFileAdd } from 'react-icons/ai';
+import { AiFillDelete} from 'react-icons/ai';
 import { PruebaModal } from 'components/laboratorio/nueva-consulta/PruebaModal';
 import { AreaModal } from 'components/laboratorio/nueva-consulta/AreaModal';
 import { AgGridReact } from 'ag-grid-react';
 import 'ag-grid-community/dist/styles/ag-grid.css';
 import 'ag-grid-community/dist/styles/ag-theme-alpine.css';
 
-const paginationConfig = {
-  rowsPerPageText: "Filas por página",
-  rangeSeparatorText: "de",
-  selectAllRowsItem: true,
-  selectAllRowsItemText: "Todos"
-}
 
 export const LaboratorioOrden = ({ testsOfPatient, addTestToOrder, deleteTestOfPatient,addTestsToOrderFromArea }) => {
-  console.log("ORDEN");
   //Refs
   const gridRef = useRef(null)
-
   //States
   const [showPruebasModal, setShowPruebasModal] = useState(false)
   const [showAreasModal, setShowAreasModal] = useState(false)
-
-  //Handlers
-
-  //Use Effects
-
-  //Para la tabla
-  //Config datatable
 
 
   const Acciones = ({data }) => {

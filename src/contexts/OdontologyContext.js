@@ -1,6 +1,7 @@
-import { createContext, useEffect, useRef, useState } from 'react'
+import { createContext, useContext, useEffect, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom';
 import OdontologyService from 'services/OdontologyService';
+import LoaderContext from './LoaderContext';
 
 const OdontologyContext = createContext();
 const formatTeeth = (teethDetail) => {
@@ -33,7 +34,8 @@ const formatMovilitiesRecessions = (movilitiesRecessions) => {
 }
 
 const OdontologyProvider = ({ children }) => {
-  const { appoId, nurId, recId } = useParams();
+  const {openLoader,closeLoader} = useContext(LoaderContext)
+  let { appoId, recId } = useParams();
   const [data, setData] = useState(null)
   const [parametersForLoader, setParametersForLoader] = useState({})
   const [exist, setExist] = useState(false)
@@ -112,12 +114,14 @@ const OdontologyProvider = ({ children }) => {
 
   const getDataForOdontology = async (appo_id) => {
     try {
+      openLoader("Generando ficha...")
       let dataFromService = await OdontologyService.getData(appo_id)
       console.log(dataFromService);
-      if(dataFromService.attended){
+      if (dataFromService.attended) {
         setExist(true)
-      }else{
+      } else {
         setData({
+          appoId:appo_id,
           patientInfo: dataFromService.patient,
           nursingAreaInfo: dataFromService.nursing_area,
           diseaseList: dataFromService.disease_list,
@@ -128,19 +132,23 @@ const OdontologyProvider = ({ children }) => {
           odontogram: dataFromService.odontogram
         })
       }
-      
+      closeLoader()
     } catch (error) {
       console.log(error);
+      closeLoader()
       setExist(true)
     }
   }
 
-  const loadDataForEdit = async (appoId, nurId, recId) => {
+  const loadDataForEdit = async (recId) => {
     try {
-      let dataFromService = await OdontologyService.getPatientRecord(appoId, nurId, recId)
+      openLoader("Cargando información...")
+      let dataFromService = await OdontologyService.getPatientRecord(recId)
       console.log(dataFromService);
+      appoId = dataFromService.appo_id
       setData({
         ...data,
+        appoId:dataFromService.appo_id,
         patientInfo: dataFromService.patient,
         patientRecord: dataFromService.patient_record,
         nursingAreaInfo: dataFromService.nursingArea,
@@ -159,9 +167,11 @@ const OdontologyProvider = ({ children }) => {
         odontogram: dataFromService.odontogram
       })
       setExist(true)
+      closeLoader()
     } catch (error) {
       console.log(error);
       setExist(false)
+      closeLoader()
     }
   }
 
@@ -169,7 +179,7 @@ const OdontologyProvider = ({ children }) => {
     if (!isEdit) {
       getDataForOdontology(appoId)
     } else {
-      loadDataForEdit(appoId, nurId, recId)
+      loadDataForEdit(recId)
     }
   }, []);
 
@@ -178,7 +188,6 @@ const OdontologyProvider = ({ children }) => {
     <OdontologyContext.Provider value={
       {
         appoId,
-        nurId,
         recId,
         data,
         isEdit,

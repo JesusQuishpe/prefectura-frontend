@@ -1,10 +1,8 @@
-import React, { useContext, useEffect, useRef, useState } from 'react';
-import { Button, Form } from 'react-bootstrap';
-import DataTable from 'react-data-table-component';
+import React, { useContext, useRef, useState } from 'react';
+import { Button} from 'react-bootstrap';
 import { AiFillDelete, AiFillEdit, AiFillFileAdd } from 'react-icons/ai';
 import { Link, useNavigate } from 'react-router-dom';
 import AreaService from 'services/AreaService';
-import { BsFillGearFill } from 'react-icons/bs'
 import { formatNumber } from 'utils/utilidades';
 import { AgGridReact } from 'ag-grid-react';
 import 'ag-grid-community/dist/styles/ag-grid.css';
@@ -13,18 +11,25 @@ import ToastContext from 'contexts/ToastContext';
 import { useDeleteModal } from 'hooks/useDeleteModal';
 
 export const AreasDashboard = () => {
+  //Refs
   const gridRef = useRef(null)
-  const [areas, setAreas] = useState([])
+  //Contexts
+  const { openToast } = useContext(ToastContext)
+  //Other hooks
   const { openModal, closeModal } = useDeleteModal()
   const navigate = useNavigate();
-  const { openToast } = useContext(ToastContext)
+  //States
+  const [areas, setAreas] = useState([])
 
+  /**
+   * Elimina un area en la base de datos
+   * @param {number} id  identificador del area
+   */
   const deleteRecord = async (id) => {
     try {
       await AreaService.eliminarArea(id)
-      getAreas()
+      loadAreas()
       closeModal()
-      //console.log(props);
     } catch (error) {
       console.log(error);
       let message = error.response.data.message ? error.response.data.message : error.response.data.exception_message
@@ -33,10 +38,17 @@ export const AreasDashboard = () => {
   }
 
   const Acciones = ({ data }) => {
+    /**
+     * Navega al formulario para editar el area
+     */
     const editarClick = () => {
       navigate(`editar/${data.id}`);
     }
 
+    /**
+     * Handler para eliminar un area
+     * Muestra un modal de confirmacion
+     */
     const deleteClick = () => {
       openModal({
         show: true,
@@ -55,6 +67,7 @@ export const AreasDashboard = () => {
     )
   }
 
+  //Coldefs del ag-grid
   const [columnDefs] = useState([
     {
       headerName: "Id",
@@ -99,7 +112,10 @@ export const AreasDashboard = () => {
     }
   ]);
 
-  const getAreas = async () => {
+  /**
+   * Carga todas las areas de laboratorio en el ag-grid
+   */
+  const loadAreas = async () => {
     try {
       gridRef.current.api.showLoadingOverlay()
       let areasFromService = await AreaService.getAreas()
@@ -116,10 +132,9 @@ export const AreasDashboard = () => {
     }
   }
 
-
   return (
     <>
-      <div className='w-75 mx-auto mt-4'>
+      <div className='w-100 p-4'>
         <h2 className='mb-4'>Areas de laboratorio</h2>
         <div className='mb-4'>
           <Link className='btn btn-success' to={"nuevo"}><AiFillFileAdd />Nuevo</Link>
@@ -138,7 +153,7 @@ export const AreasDashboard = () => {
               '<span class="text-center">No hay filas que mostrar</span>'
             }
             onGridReady={() => {
-              getAreas()
+              loadAreas()
             }}
           >
           </AgGridReact>

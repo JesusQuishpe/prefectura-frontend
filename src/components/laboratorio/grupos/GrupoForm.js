@@ -3,8 +3,6 @@ import GrupoService from 'services/GrupoService';
 import { Alert, Button, Col, Container, Form, Row } from 'react-bootstrap';
 import { useParams } from 'react-router-dom';
 import ToastContext from '../../../contexts/ToastContext';
-import MyToast from 'components/MyToast';
-import { Loader } from 'components/Loader';
 import Select from 'react-select'
 import AreaService from 'services/AreaService';
 import LoaderContext from 'contexts/LoaderContext';
@@ -21,14 +19,14 @@ const optionsFun = (data) => {
 }
 
 export const GrupoForm = () => {
-  const { idGrupo } = useParams();
-  const isEdit = idGrupo ? true : false;
+  //Contexts
   const { openToast } = useContext(ToastContext)
+  const { openLoader, closeLoader } = useContext(LoaderContext)
+  //Other hooks
+  const { idGrupo } = useParams()
+  //States
   const [options, setOptions] = useState([])
   const [showAlert, setShowAlert] = useState(false)
-  const { openLoader, closeLoader } = useContext(LoaderContext)
-
-  //States
   const initialForm = {
     code: "",
     name: "",
@@ -36,26 +34,44 @@ export const GrupoForm = () => {
     area: null,
     showAtPrint: false
   }
-
-  //Estado para el formulario
   const [form, setForm] = useState(initialForm);
 
+  const isEdit = idGrupo ? true : false
+
+  /**
+   * Handler para actualizar los valores del formulario, solo inputs.
+   * @param {Event} e 
+   */
   const handleForm = (e) => {
     const { name, value } = e.target;
     setForm({
       ...form,
       [name]: value.toUpperCase()
     });
-  };
+  }
 
+  /**
+   * Handler para el check del formulario
+   * @param {Event} e 
+   */
   const handleCheck = (e) => {
     const { name, checked } = e.target
     setForm({ ...form, [name]: checked })
   }
+
+  /**
+   * Handler para el select del formulario
+   * @param {object} selected 
+   */
   const handleSelectedArea = (selected) => {
     setForm({ ...form, area: selected })
   }
 
+  /**
+   * Handler para guardar los datos del grupo en la BD
+   * @param {Event} e 
+   * @returns 
+   */
   const handleSubmit = async (e) => {
     try {
       e.preventDefault()
@@ -81,6 +97,10 @@ export const GrupoForm = () => {
     }
   };
 
+  /**
+   * Carga los datos del grupo dado el idenficador
+   * @param {number} id identificador del grupo
+   */
   const getGrupoById = async (id) => {
     let grupo = await GrupoService.getGrupo(id);
     console.log(grupo);
@@ -97,6 +117,9 @@ export const GrupoForm = () => {
 
   }
 
+  /**
+   * Carga las areas para el select del formulario
+   */
   const getAreas = async () => {
     let areasFromService = await AreaService.getAreas()
     console.log(areasFromService);
@@ -108,7 +131,6 @@ export const GrupoForm = () => {
     if (isEdit) {
       getGrupoById(idGrupo);
     }
-    //return () => clearTimeout(timeout)
   }, []);
 
   useEffect(() => {

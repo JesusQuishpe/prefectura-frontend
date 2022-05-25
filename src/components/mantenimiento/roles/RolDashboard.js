@@ -1,10 +1,7 @@
-import axios from 'axios';
-import React, { useContext, useEffect, useRef, useState } from 'react';
+import React, { useContext, useRef, useState } from 'react';
 import { Button } from 'react-bootstrap';
-import DataTable from 'react-data-table-component';
 import { AiFillDelete, AiFillEdit, AiFillFileAdd } from 'react-icons/ai';
 import { Link, useNavigate } from 'react-router-dom';
-import { END_POINT } from '../../../utils/conf';
 import { AgGridReact } from 'ag-grid-react';
 import 'ag-grid-community/dist/styles/ag-grid.css';
 import 'ag-grid-community/dist/styles/ag-theme-alpine.css';
@@ -12,19 +9,51 @@ import ToastContext from 'contexts/ToastContext';
 import { useDeleteModal } from 'hooks/useDeleteModal';
 import RolService from 'services/RolService';
 
-export const RolDashboard = () => {
-  const gridRef = useRef(null)
-  const [data, setData] = useState([]);
-  const { openModal, closeModal } = useDeleteModal()
+const Acciones = ({ data, deleteRecord }) => {
+  const { openModal } = useDeleteModal()
   const navigate = useNavigate();
-  const { openToast } = useContext(ToastContext)
 
+  const editarClick = () => {
+    navigate(`editar/${data.id}`);
+  }
+
+  const deleteClick = () => {
+    openModal({
+      show: true,
+      id: data.id,
+      message: `Nota: Solo se podrán eliminar 
+      roles que no tengan relación con algún registro.`,
+      deleteCallback: deleteRecord
+    })
+  }
+
+  return (
+    <div className='d-flex flex-nowrap'>
+      <Button variant='primary' className='me-2' onClick={editarClick}><AiFillEdit /></Button>
+      <Button variant='danger' onClick={deleteClick}><AiFillDelete /></Button>
+    </div>
+  )
+}
+
+export const RolDashboard = () => {
+  //Refs
+  const gridRef = useRef(null)
+  //Contexts
+  const { openToast } = useContext(ToastContext)
+  //Other hooks
+  const { closeModal } = useDeleteModal()
+  //States
+  const [data, setData] = useState([]);
+
+  /**
+   * Elimina un rol de la BD
+   * @param {number} id 
+   */
   const deleteRecord = async (id) => {
     try {
       await RolService.eliminarRol(id)
-      getRoles()
+      loadRoles()
       closeModal()
-      //console.log(props);
     } catch (error) {
       console.log(error);
       let message = error.response.data.message ? error.response.data.message : error.response.data.exception_message
@@ -32,29 +61,7 @@ export const RolDashboard = () => {
     }
   }
 
-  const Acciones = ({ data }) => {
-    const editarClick = () => {
-      navigate(`editar/${data.id}`);
-    }
-
-    const deleteClick = () => {
-      openModal({
-        show: true,
-        id: data.id,
-        message: `Nota: Solo se podrán eliminar 
-        roles que no tengan relación con algún registro.`,
-        deleteCallback: deleteRecord
-      })
-    }
-
-    return (
-      <div className='d-flex flex-nowrap'>
-        <Button variant='primary' className='me-2' onClick={editarClick}><AiFillEdit /></Button>
-        <Button variant='danger' onClick={deleteClick}><AiFillDelete /></Button>
-      </div>
-    )
-  }
-
+  //Coldefs para el ag-grid
   const [columnDefs] = useState([
     {
       headerName: "Id",
@@ -76,11 +83,17 @@ export const RolDashboard = () => {
     },
     {
       headerName: "Acciones",
-      cellRenderer: Acciones
+      cellRenderer: Acciones,
+      cellRendererParams: {
+        deleteRecord
+      }
     }
   ]);
 
-  const getRoles = async () => {
+  /**
+   * Carga los roles en el ag-grid
+   */
+  const loadRoles = async () => {
     try {
       gridRef.current.api.showLoadingOverlay()
       let roles = await RolService.getRoles()
@@ -99,10 +112,10 @@ export const RolDashboard = () => {
 
   return (
     <>
-      <div className='w-75 mx-auto mt-4'>
-        <h2>Roles</h2>
+      <div className='w-100 p-4'>
+        <h2 className='mb-3'>Roles</h2>
 
-        <div className='mb-2'>
+        <div className='mb-3'>
           <Link className='btn btn-success' to={"nuevo"}><AiFillFileAdd /> Nuevo</Link>
         </div>
         <div className="ag-theme-alpine" style={{ height: 450, width: "100%" }}>
@@ -120,7 +133,7 @@ export const RolDashboard = () => {
             }
             onGridReady={(e) => {
               e.api.showLoadingOverlay()
-              getRoles()
+              loadRoles()
             }}
           >
           </AgGridReact>

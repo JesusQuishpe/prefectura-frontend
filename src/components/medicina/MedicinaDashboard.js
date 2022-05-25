@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react'
-import { Alert, Button, Card, Col, Form, FormControl, InputGroup, Row } from 'react-bootstrap';
-import { AiFillDelete, AiFillFileAdd, AiFillEdit } from 'react-icons/ai';
+import React, { useState, useRef } from 'react'
+import { Button, Col, Form, FormControl, InputGroup, Row } from 'react-bootstrap';
+import { AiFillDelete, AiFillEdit } from 'react-icons/ai';
 import { AgGridReact } from 'ag-grid-react';
 import 'ag-grid-community/dist/styles/ag-grid.css';
 import 'ag-grid-community/dist/styles/ag-theme-alpine.css';
@@ -22,7 +22,8 @@ export const MedicinaDashboard = () => {
   //Refs
   const gridRef = useRef(null)
   const queryRef = useRef()
-  const [data, setData] = useState([]);
+  //States
+  const [data, setData] = useState([])
   const [columnDefs] = useState([
     {
       headerName: "N° cita",
@@ -60,15 +61,15 @@ export const MedicinaDashboard = () => {
       headerName: "Acciones",
       cellRenderer: Acciones
     }
-  ]);
+  ])
 
   const loadMedicineRecordByIdentification = async (identification) => {
     try {
       gridRef.current.api.showLoadingOverlay()
       let records = await MedicineService.getMedicineRecordsByIdentification(identification)
-      if(records.length===0){
+      if (records.length === 0) {
         gridRef.current.api.showNoRowsOverlay()
-      }else{
+      } else {
         gridRef.current.api.hideOverlay()
       }
       console.log(records);
@@ -79,7 +80,7 @@ export const MedicinaDashboard = () => {
     }
   }
 
-  
+
   const handleSubmitSearch = (e) => {
     e.preventDefault()
     let query = queryRef.current.value

@@ -1,13 +1,12 @@
 import React, { useContext, useEffect, useMemo, useRef, useState } from 'react'
-import { Alert, Button, Col, Form, FormControl, InputGroup, Row } from 'react-bootstrap';
+import {  Button, Col, Form, FormControl, InputGroup, Row } from 'react-bootstrap';
 import OrdenService from 'services/OrdenService';
 import { AgGridReact } from 'ag-grid-react';
 import 'ag-grid-community/dist/styles/ag-grid.css';
 import 'ag-grid-community/dist/styles/ag-theme-alpine.css';
-import { formatNumber, roundToTwo } from 'utils/utilidades';
+import {  roundToTwo } from 'utils/utilidades';
 import PatientService from 'services/PatientService';
 import { BiSave } from 'react-icons/bi'
-import { Loader } from 'components/Loader';
 import CapturaService from 'services/CapturaService';
 import 'css/CustomTooltip.css'
 import LoaderContext from 'contexts/LoaderContext';
@@ -15,40 +14,18 @@ import ToastContext from 'contexts/ToastContext';
 
 const Parser = require('expr-eval').Parser;
 
-
-const CustomTooltip = (props) => {
-  console.log(props);
-  const data = useMemo(
-    () => props.api.getDisplayedRowAtIndex(props.rowIndex).data,
-    []
-  );
-
-  const valueToDisplay = props.value.value ? props.value.value : '- Missing -';
-  return (
-    <div className="custom-tooltip">
-      <p>
-        <span>Operandos no encontrados:</span>
-      </p>
-      <p>
-        <span>{data.incalculable_error}</span>
-      </p>
-    </div>
-  );
-};
-
 export const CapturaResultados = () => {
-  const queryRef = useRef()
   //Refs
+  const queryRef = useRef()
   const gridRef = useRef(null)
   const pendientesRef = useRef(null)
+  //Contexts
+  const { openLoader, closeLoader } = useContext(LoaderContext)
+  const { openToast } = useContext(ToastContext)
   //States
   const [tests, setTests] = useState([])
   const [pendingTests, setPendingTests] = useState([]);
   const [showAlert, setShowAlert] = useState(false)
-  const [showLoader, setShowLoader] = useState({})
-  const { openLoader, closeLoader } = useContext(LoaderContext)
-  const { openToast } = useContext(ToastContext)
-
   const initialForm = {
     id: "",
     identification_number: "",
@@ -57,9 +34,9 @@ export const CapturaResultados = () => {
     cellphone_number: "",
     patient: ""
   }
-
   const [form, setForm] = useState(initialForm);
 
+  //Coldefs para las ag-grid
   const columnDefs = useMemo(() => {
     return [
       {
@@ -88,12 +65,6 @@ export const CapturaResultados = () => {
       {
         colId: "resultado",
         headerName: "Resultado",
-        tooltipComponent: CustomTooltip,
-        tooltipField: 'incalculable_error',
-        tooltipValueGetter: params => {
-          console.log(params);
-          return params.incalculable_error
-        },
         editable: (params) => {
           return params.data.test.formula ? false : true
         },
@@ -212,11 +183,10 @@ export const CapturaResultados = () => {
 
   const [pendingTestColumnDefs] = useState([
     { headerName: "N° orden", field: "id", maxWidth: 100, sortable: true },
-    { headerName: "Fecha",field: "date", sortable: true },
-    { headerName: "Hora",field: "hour", sortable: true },
+    { headerName: "Fecha", field: "date", sortable: true },
+    { headerName: "Hora", field: "hour", sortable: true },
     { headerName: "Pruebas", flex: 1, field: "test_items" }
   ])
-
 
   /**
    * Carga la informacion del paciente y las ordenes pendientes 
@@ -243,7 +213,7 @@ export const CapturaResultados = () => {
         patient: patient.fullname
       })
       setPendingTests(orders)
-      if(orders.length===0){
+      if (orders.length === 0) {
         pendientesRef.current.api.showNoRowsOverlay()
       }
       closeLoader()
@@ -314,7 +284,7 @@ export const CapturaResultados = () => {
       console.log(resultados);
       await CapturaService.crearCaptura(resultados)
       closeLoader()
-      openToast("Resultados guardados correctamente",true)
+      openToast("Resultados guardados correctamente", true)
       //console.log(testConverted);
       let ordenes = await OrdenService.getOrdenesPendientesPorCedula(form.identification_number)
       setPendingTests(ordenes)
@@ -323,7 +293,7 @@ export const CapturaResultados = () => {
     } catch (error) {
       console.log(error);
       closeLoader()
-      let message=error.response.data.message ? error.response.data.message : error.response.data.exception_message
+      let message = error.response.data.message ? error.response.data.message : error.response.data.exception_message
       openToast(message, false)
     }
   }
@@ -364,11 +334,12 @@ export const CapturaResultados = () => {
     //Solo se autocalculará los valores de la columna resultado
     if (e.colDef.colId !== "resultado") return
     const { is_numeric, code, formula } = e.data.test
-    //Verificamos que el campo sea numerico
+    //Validamos que el campo sea numerico
     if (is_numeric !== 1) return
     //Si es un campo que tiene formula entonces evitamos el cellchange
     if (formula) return
-    //Si no es un numero, cambiamos a undefined los nodos que incluyen el codigo en su formula
+    //Si el valor actual de la celda no es un número, 
+    //cambiamos a undefined los nodos que incluyen el código del nodo actual(prueba) en su formula
     if (isNaN(e.data.result)) {
       e.api.forEachNode(node => {
         if (node.data.test.formula &&
@@ -381,30 +352,27 @@ export const CapturaResultados = () => {
     }
     //Recorremos las filas
     e.api.forEachNode(node => {
-      //Verificamos si el nodo(fila) tiene formula
-      //Si el codigo de la celda editada está en la formula del nodo actual
+      //Verificamos si el nodo(prueba) tiene formula y
+      //Validamos si el codigo de la celda editada está en la formula del nodo actual
       if (node.data.test.formula &&
         node.data.test.formula.includes(code)
       ) {
-        //Buscar valores de los operandos de la formula del node
+        //Buscar valores de los operandos de la formula del nodo
         const valores = getValoresDeOperandos(e, node)
         console.log(valores);
-        //console.log("ENTRO:", valores);
-        if (Array.isArray(valores)) {//Faltan operandos
+        if (Array.isArray(valores)) {//Si es un array entonces faltan operandos
+          //Agregamos los operandos que faltan a la celda
           node.setDataValue('resultado', "Incalculable: " + valores.join(','))
-        } else {
+        } else {//Evaluamos la formula con los valores devueltos
           const parser = new Parser();
           const expr = parser.parse(node.data.test.formula);
           const result = roundToTwo(expr.evaluate(valores))
           node.setDataValue('resultado', result)
         }
-
-
       }
     })
 
   }
-
 
   useEffect(() => {
     if (localStorage.getItem('identification_captura')) {
@@ -417,7 +385,6 @@ export const CapturaResultados = () => {
 
   return (
     <div className='w-100  p-4'>
-      <Loader parameters={showLoader} />
       <h4 className='mb-3'>Captura de resultados</h4>
       <Row>
         <Col>
@@ -445,7 +412,7 @@ export const CapturaResultados = () => {
           </div>
         </Col>
       </Row>
-      
+
       <Row className='mb-3'>
         <Col>
           <Form.Group as={Row} className="m-0" controlId="id">
@@ -542,12 +509,10 @@ export const CapturaResultados = () => {
           <AgGridReact
             ref={gridRef}
             rowData={tests}
-            tooltipShowDelay={0}
-            tooltipHideDelay={2000}
             columnDefs={columnDefs}
             rowSelection={'single'}
-            //onSelectionChanged={onSelectionChanged}
-            pagination
+            debounceVerticalScrollbar={true}
+            //pagination
             onCellValueChanged={handleCellChange}
             overlayLoadingTemplate={
               '<span class="ag-overlay-loading-center">Cargando pruebas...</span>'

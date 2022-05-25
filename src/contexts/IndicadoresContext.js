@@ -1,4 +1,4 @@
-import { createContext, forwardRef, useState, useImperativeHandle, useContext } from 'react'
+import { createContext, forwardRef, useState, useImperativeHandle, useContext, useEffect } from 'react'
 import OdontologyContext from './OdontologyContext'
 
 const IndicadoresContext = createContext()
@@ -19,14 +19,14 @@ const createDataToIndicators = (details, indicator) => {
   for (let index = 0; index < FILAS_PIEZAS; index++) {
     data.push(
       {
-        id:details && details.length>0 && details[index].id || null,
+        id: details ? details.length > 0 ? details[index].id : null : null,
         pos: index,
-        piece1: details && details.length>0 && details[index].piece1 === 1 ? true : false,
-        piece2: details && details.length>0 && details[index].piece2 === 1 ? true : false,
-        piece3: details && details.length>0 && details[index].piece3 === 1 ? true : false,
-        plaque: details && details.length>0 && details[index].plaque ? details[index].plaque : null,
-        calc: details && details.length>0 && details[index].calc ? details[index].calc : null,
-        gin: details && details.length>0 && details[index].gin ? details[index].gin : null,
+        piece1: details && details.length > 0 && details[index].piece1 === 1 ? true : false,
+        piece2: details && details.length > 0 && details[index].piece2 === 1 ? true : false,
+        piece3: details && details.length > 0 && details[index].piece3 === 1 ? true : false,
+        plaque: details && details.length > 0 && details[index].plaque ? details[index].plaque : null,
+        calc: details && details.length > 0 && details[index].calc ? details[index].calc : null,
+        gin: details && details.length > 0 && details[index].gin ? details[index].gin : null,
         pieces: PIEZAS_DENTALES[index]
       }
     )
@@ -44,17 +44,15 @@ const createDataToIndicators = (details, indicator) => {
 const IndicadoresProvider = forwardRef(
   ({ children }, ref) => {
     const { data } = useContext(OdontologyContext)
-    let arr = []
-    //console.log(arr ? true : false);
     const [form, setForm] = useState({
-      per_disease: data?.indicator?.per_disease || "",
-      bad_occlu: data?.indicator?.bad_occlu || "",
-      fluorosis: data?.indicator?.fluorosis || "",
-      indicator_details: createDataToIndicators(data?.indicator?.details, data?.indicator),
-      plaque_total: data?.indicator?.plaque_total || 0,
-      calc_total: data?.indicator?.calc_total || 0,
-      gin_total: data?.indicator?.gin_total || 0,
-      id:data?.indicator?.id || null
+      per_disease: "",
+      bad_occlu:  "",
+      fluorosis: "",
+      indicator_details: [],
+      plaque_total: 0,
+      calc_total:  0,
+      gin_total:  0,
+      id: null
     })
 
     useImperativeHandle(ref, () => {
@@ -92,6 +90,19 @@ const IndicadoresProvider = forwardRef(
       handleForm,
       updateTotales
     }
+
+    useEffect(() => {
+      setForm({
+        per_disease: data?.indicator?.per_disease || "",
+        bad_occlu: data?.indicator?.bad_occlu || "",
+        fluorosis: data?.indicator?.fluorosis || "",
+        indicator_details: createDataToIndicators(data?.indicator?.details, data?.indicator),
+        plaque_total: data?.indicator?.plaque_total || 0,
+        calc_total: data?.indicator?.calc_total || 0,
+        gin_total: data?.indicator?.gin_total || 0,
+        id: data?.indicator?.id || null
+      })
+    }, [data])
 
     return (
       <IndicadoresContext.Provider value={dataForProvider}>

@@ -1,14 +1,14 @@
 import React from 'react'
-import { Form } from 'react-bootstrap'
-import { InputMR } from './InputMR'
+import InputMR from './InputMR'
 
-const crearMovilidadRecesion = (start, end, type, details = []) => {
+const crearMovilidadRecesion = (start, end, type, details = [], updateMovilitiesRecessions) => {
   let cols = []
   for (let index = start; index < end; index++) {
     let detail = details.find(detail => detail.pos === index)
     cols.push(
       <div key={index}>
         <InputMR
+          updateMovilitiesRecessions={updateMovilitiesRecessions}
           pos={index}
           type={type}
           valueOfDetail={detail ? detail.value : ""}
@@ -25,8 +25,12 @@ const crearMovilidadRecesion = (start, end, type, details = []) => {
   );
 }
 
-export const MovilidadRecesion = ({ start, end, type, details }) => {
+const MovilidadRecesion = ({ start, end, type, details, updateMovilitiesRecessions }) => {
   return (
-    crearMovilidadRecesion(start, end, type, details)
-  );
-};
+    crearMovilidadRecesion(start, end, type, details, updateMovilitiesRecessions)
+  )
+}
+export default React.memo(MovilidadRecesion, (prev, next) => {
+  return !(prev.details !== next.details)
+})
+

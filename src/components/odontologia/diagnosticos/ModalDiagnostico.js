@@ -5,27 +5,37 @@ import Select from 'react-select'
 
 
 export const ModalDiagnostico = ({ data, closeModal, addDiagnostic, updateDiagnostic }) => {
-
-
+  //Contexts
   const { data:dataFromContext } = useContext(OdontologiaContext)
-
+  //States
   const initialForm = { type: "", description: "", cie: null }
-
   const [form, setForm] = useState(initialForm)
-
   const [error, setError] = useState(false)
 
   const isEdit = data.row ? true : false
 
+  /**
+   * Handler para el formulario
+   * @param {Event} e 
+   */
   const handleOnChangeForm = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value })
   }
 
+  /**
+   * Hanlder para actualizar el select de CIE para el formulario
+   * @param {object} itemSelected 
+   */
   const handleOnChangeCie = (itemSelected) => {
     //setSelectedCie({ ...itemSelected })
     setForm({ ...form, cie: itemSelected })
   }
 
+  /**
+   * Handler para guardar el diagnostico y actualizar el ag-grid
+   * @param {Event} e 
+   * @returns 
+   */
   const handleOnClickSave = (e) => {
 
     if (form.type === "" || form.description === "" || !form.cie) {
