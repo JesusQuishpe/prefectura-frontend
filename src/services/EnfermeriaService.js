@@ -28,4 +28,9 @@ EnfermeriaService.update = async (data) => {
   let response = await axios.put(END_POINT + `enfermerias/${data.nurId}`, data)
   return response.data.data
 }
+EnfermeriaService.delete = async (id) => {
+  let response = await axios.delete(END_POINT + `enfermerias/${id}`)
+  return response
+}
+
 export default EnfermeriaService

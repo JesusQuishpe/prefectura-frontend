@@ -9,7 +9,7 @@ const MyToast = () => {
   const { closeToast, messageToast, logoToast, showToast } = useContext(ToastContext);
   console.log("TOast", showToast);
   return ReactDOM.createPortal(
-    <ToastContainer position='top-end' style={{ zIndex: "5000", marginTop: "66px", marginRight: "20px" }} >
+    <ToastContainer position='top-end' style={{ zIndex: "5000000", marginTop: "66px", marginRight: "20px" }} >
       <Toast onClose={closeToast} show={showToast} className='bg-light' autohide>
         <div className='d-flex flex-column w-100'>
           <Toast.Header className='d-flex justify-content-between'>

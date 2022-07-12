@@ -1,131 +1,183 @@
 import React, { useState, useRef } from 'react'
-import { Button, Col, Form, FormControl, InputGroup, Row } from 'react-bootstrap';
-import { AiFillDelete, AiFillEdit } from 'react-icons/ai';
-import { AgGridReact } from 'ag-grid-react';
-import 'ag-grid-community/dist/styles/ag-grid.css';
-import 'ag-grid-community/dist/styles/ag-theme-alpine.css';
 import MedicineService from 'services/MedicineService';
 import { useNavigate } from 'react-router-dom';
+import { Button, Col, Form, Input, Row, Space, Table } from 'antd';
+import { EditOutlined, DeleteOutlined,SearchOutlined  } from '@ant-design/icons'
+import Highlighter from 'react-highlight-words';
 
-
-const Acciones = ({ data }) => {
-  const navigate = useNavigate()
-  return (
-    <div className='d-flex flex-nowrap'>
-      <Button variant='primary' className='me-2' onClick={() => navigate(`${data.medicine_id}/editar`)}><AiFillEdit /></Button>
-      <Button variant='danger'><AiFillDelete /></Button>
-    </div>
-  )
-}
 
 export const MedicinaDashboard = () => {
+  const navigate = useNavigate()
   //Refs
-  const gridRef = useRef(null)
-  const queryRef = useRef()
   //States
   const [data, setData] = useState([])
-  const [columnDefs] = useState([
-    {
-      headerName: "N° cita",
-      field: "medicine_id",
-      maxWidth: 150,
-      sortable: true,
-      filter: true,
-      floatingFilter: true,
-      suppressMenu: true
-    },
-    {
-      headerName: "Paciente",
-      field: "fullname",
-      flex: 1,
-      sortable: true,
-      filter: true,
-      floatingFilter: true,
-      suppressMenu: true
-    },
-    {
-      headerName: "Fecha de cita",
-      field: "date",
-      flex: 1,
-      sortable: true,
-      filter: true,
-      floatingFilter: true,
-      suppressMenu: true
-    },
-    {
-      headerName: "Hora de cita",
-      field: "hour",
-      flex: 1,
-    },
-    {
-      headerName: "Acciones",
-      cellRenderer: Acciones
-    }
-  ])
-
+  const [searchText, setSearchText] = useState('');
+  const [searchedColumn, setSearchedColumn] = useState('');
+  const searchInput = useRef(null);
+  
   const loadMedicineRecordByIdentification = async (identification) => {
     try {
-      gridRef.current.api.showLoadingOverlay()
+
       let records = await MedicineService.getMedicineRecordsByIdentification(identification)
-      if (records.length === 0) {
-        gridRef.current.api.showNoRowsOverlay()
-      } else {
-        gridRef.current.api.hideOverlay()
-      }
       console.log(records);
-      setData(records)
+      setData(records.map(item => ({
+        key: item.appo_id,
+        medicine_id: item.medicine_id,
+        fullname: item.fullname,
+        date: item.date,
+        hour: item.hour,
+      })))
+
     } catch (error) {
-      gridRef.current.api.showNoRowsOverlay()
       console.log(error);
     }
   }
 
 
-  const handleSubmitSearch = (e) => {
-    e.preventDefault()
-    let query = queryRef.current.value
-    loadMedicineRecordByIdentification(query)
+  const handleSubmitSearch = (identification) => {
+    loadMedicineRecordByIdentification(identification)
   }
+  const handleSearch = (selectedKeys, confirm, dataIndex) => {
+    confirm();
+    setSearchText(selectedKeys[0])
+    setSearchedColumn(dataIndex)
+  }
+
+  const handleReset = (clearFilters) => {
+    clearFilters()
+    setSearchText('')
+  }
+  const getColumnSearchProps = (dataIndex) => ({
+    filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+      <div
+        style={{
+          padding: 8,
+        }}
+      >
+        <Input
+          ref={searchInput}
+          placeholder={`Buscar paciente`}
+          value={selectedKeys[0]}
+          onChange={(e) => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+          onPressEnter={() => handleSearch(selectedKeys, confirm, dataIndex)}
+          style={{
+            marginBottom: 8,
+            display: 'block',
+          }}
+        />
+        <Space>
+          <Button
+            type="primary"
+            onClick={() => handleSearch(selectedKeys, confirm, dataIndex)}
+            icon={<SearchOutlined />}
+            size="small"
+            style={{
+              width: 90,
+            }}
+          >
+            Buscar
+          </Button>
+          <Button
+            onClick={() => clearFilters && handleReset(clearFilters)}
+            size="small"
+            style={{
+              width: 90,
+            }}
+          >
+            Resetear
+          </Button>
+          <Button
+            type="link"
+            size="small"
+            onClick={() => {
+              confirm({
+                closeDropdown: false,
+              });
+              setSearchText(selectedKeys[0]);
+              setSearchedColumn(dataIndex);
+            }}
+          >
+            Filtrar
+          </Button>
+        </Space>
+      </div>
+    ),
+    filterIcon: (filtered) => (
+      <SearchOutlined
+        style={{
+          color: filtered ? '#1890ff' : undefined,
+        }}
+      />
+    ),
+    onFilter: (value, record) =>
+      record[dataIndex].toString().toLowerCase().includes(value.toLowerCase()),
+    onFilterDropdownVisibleChange: (visible) => {
+      if (visible) {
+        setTimeout(() => searchInput.current?.select(), 100);
+      }
+    },
+    render: (text) =>
+      searchedColumn === dataIndex ? (
+        <Highlighter
+          highlightStyle={{
+            backgroundColor: '#ffc069',
+            padding: 0,
+          }}
+          searchWords={[searchText]}
+          autoEscape
+          textToHighlight={text ? text.toString() : ''}
+        />
+      ) : (
+        text
+      ),
+  })
+
+  const columns = [
+    {
+      title: "N° cita",
+      dataIndex: "medicine_id"
+    },
+    {
+      title: "Paciente",
+      dataIndex: "fullname",
+      key: "fullname",
+      ...getColumnSearchProps('fullname')
+    },
+    {
+      title: "Fecha",
+      dataIndex: "date"
+    },
+    {
+      title: "Hora",
+      dataIndex: "hour"
+    },
+    {
+      title: "Acciones",
+      render: (_, record) => {
+        return (
+          <Space>
+            <Button type='primary' onClick={() => navigate(`${record.medicine_id}/editar`)}><EditOutlined /></Button>
+            <Button type='primary' danger onClick={() => console.log(record.medicine_id)}><DeleteOutlined /></Button>
+          </Space>
+        )
+      }
+    }
+  ]
 
   return (
     <>
       <div className='p-4'>
         <h4 className='mb-3'>Consulta de resultados</h4>
-        <Row>
-          <Col>
-            <Form onSubmit={handleSubmitSearch}>
-              <InputGroup className="mb-3">
-                <FormControl
-                  placeholder="Buscar por el número de cédula"
-                  aria-label="Input para el número de cedula del paciente"
-                  className='me-2'
-                  type='text'
-                  ref={queryRef}
-                />
-                <Button variant="secondary" type='submit' className="me-2">
-                  Buscar
-                </Button>
-              </InputGroup>
-            </Form>
-          </Col>
-        </Row>
-        <div className="ag-theme-alpine" style={{ height: 500, width: "100%" }}>
-
-          <AgGridReact
-            ref={gridRef}
-            rowData={data}
-            columnDefs={columnDefs}
-            rowSelection={'single'}
-            pagination
-            overlayLoadingTemplate={
-              '<span class="ag-overlay-loading-center">Cargando...</span>'
-            }
-            overlayNoRowsTemplate={
-              '<span class="text-center">No hay resultados que mostrar</span>'
-            }
-          >
-          </AgGridReact>
-        </div>
+        <Input.Search
+          placeholder='Buscar por número de cedula'
+          onSearch={handleSubmitSearch}
+          style={{marginBottom:"20px"}}
+        />
+        <Table
+          columns={columns}
+          dataSource={data}
+          pagination
+        />
       </div>
     </>
   )

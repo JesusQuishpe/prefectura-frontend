@@ -35,7 +35,7 @@ function formatNumber(number) {
 }
 
 function dataURLtoFile(dataurl, filename) {
-  return new Promise((resolve,reject) => {
+  return new Promise((resolve, reject) => {
     var arr = dataurl.split(','),
       mime = arr[0].match(/:(.*?);/)[1],
       bstr = atob(arr[1]),
@@ -54,10 +54,10 @@ function dataURLtoFile(dataurl, filename) {
 function findPos(element) {
   var curtop = 0;
   if (element.offsetParent) {
-      do {
-          curtop += element.offsetTop;
-      } while (element = element.offsetParent);
-  return [curtop];
+    do {
+      curtop += element.offsetTop;
+    } while (element = element.offsetParent);
+    return [curtop];
   }
 }
 
@@ -69,6 +69,10 @@ const getOperandosDeFormula = (formula) => {
   return operandos
 }
 
+const addKeyForAntDTables = (data) => {
+  if (!data) return []
+  return data.map(item => ({ key: item.id, ...item }))
+}
 export {
   roundToTwo,
   ordenarArrayEstudios,
@@ -76,5 +80,6 @@ export {
   formatNumber,
   dataURLtoFile,
   findPos,
-  getOperandosDeFormula
+  getOperandosDeFormula,
+  addKeyForAntDTables
 };

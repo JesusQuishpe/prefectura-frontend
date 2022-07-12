@@ -1,6 +1,6 @@
-import React, { useContext, useRef, useState } from 'react';
-import { Button, Col, Form, Nav, Row, Tab, Tabs } from 'react-bootstrap';
-import { Antecedentes, General } from './Antecedentes';
+import React, { useContext, useEffect, useRef, useState } from 'react';
+import { Nav } from 'react-bootstrap';
+import { Antecedentes, General } from './antecedentes/Antecedentes';
 import IndicesCpoCeo from './IndicesCpoCeo';
 import Diagnosticos from './diagnosticos/Diagnosticos';
 import Tratamientos from './tratamientos/Tratamientos';
@@ -16,7 +16,7 @@ import ActaDeConstitucion from './acta/ActaDeConstitucion';
 import Cabecera from './Cabecera';
 import { useUser } from 'hooks/useUser';
 import { NotFound } from 'components/NotFound';
-import { useNavigate} from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { END_POINT } from 'utils/conf';
 import domtoimage from 'dom-to-image';
 import { dataURLtoFile } from 'utils/utilidades';
@@ -25,6 +25,36 @@ import ToastContext from 'contexts/ToastContext';
 import OdontologyService from 'services/OdontologyService';
 import { Odontogram } from './odontograma/Odontogram';
 import { OdontogramProvider } from 'contexts/OdontogramContext';
+import { CardPacienteOdontologia } from './CardPacienteOdontologia';
+import { CardPacienteEnfermeria } from './CardPacienteEnfermeria';
+import { Button, Card, Col, Input, Row, Space, Table, Tabs, Typography } from 'antd';
+import axios from 'axios';
+import { FileAddOutlined } from '@ant-design/icons'
+
+const { Title } = Typography
+const { TabPane } = Tabs;
+
+/*const initialData = {
+  patient_record: {
+    value: 0,
+    procedure: null,
+    reason_consultation: "",
+    current_disease_and_problems: "",
+    age_range: null,
+    odontogram_path: null,
+    acta_path: null,
+    id: null
+  },
+  family_history: {
+    familyHistoryChecked: loadFamilyCheckDetails(data?.familyHistory?.details),
+    familyHistoryDescription: data?.familyHistory?.description || "",
+    pathologiesChecked: loadPathologiesCheckDetails(data?.stomatognathicTest?.details),
+    pathologiesDescription: data?.stomatognathicTest?.description || "",
+    fam_id: data?.familyHistory?.id || null
+  }
+
+}*/
+
 
 export const OdontologiaFicha = () => {
 
@@ -51,8 +81,13 @@ export const OdontologiaFicha = () => {
   const cabeceraRef = useRef()
 
   const [key, setKey] = useState("general")
+  const [dataList, setDataList] = useState([])
+
 
   const guardarFicha = async () => {
+    console.log(cabeceraRef.current.data);
+    console.log(familyHistoryRef.current.data);
+    console.log(ratiosRef.current.data);
     try {
       openLoader("Generando imagen del odontograma...")
       console.log(odontogramaRef.current.odontogramGridElement);
@@ -105,11 +140,13 @@ export const OdontologiaFicha = () => {
     } catch (error) {
       console.log(error);
       closeLoader()
-      let message = error.response.data.message ? error.response.data.message :
+      /*let message = error.response.data.message ? error.response.data.message :
         error.response.data.exception_message
-      openToast(message, false)
+      openToast(message, false)*/
     }
   }
+
+ 
 
   const getOdontrogramImageFile = async (element) => {
     const scale = 2;
@@ -142,166 +179,92 @@ export const OdontologiaFicha = () => {
     return dataURLtoFile(dataURL, "odontograma.png");
   }
 
+
   if (exist && !isEdit) {
-    return <NotFound /> 
+    return <NotFound />
   }
 
   return (
     <>
-      {
-        <div className='d-flex flex-column h-100'>
-          <div className='ficha-container'>
-            <div className='sidebar'>
-              <div id="content-sidebar">
-                <div className='text-center'>
-                  <h4 >ODONTOLOGIA</h4>
-                  <img src={DentalLogo} alt="" width={"150px"} height={"150px"} />
-                </div>
-                <span className='fw-bold mb-3'>INFORMACIÓN DEL PACIENTE</span>
-                <Row>
-                  <Col sm={4}>Cédula:</Col>
-                  <Col>{data?.patientInfo.identification_number}</Col>
-                </Row>
-                <Row>
-                  <Col sm={4}>Nombre:</Col>
-                  <Col>{data?.patientInfo.name}</Col>
-                </Row>
-                <Row>
-                  <Col sm={4}>Apellidos:</Col>
-                  <Col>{data?.patientInfo.lastname}</Col>
-                </Row>
-                <Row>
-                  <Col sm={4}>Sexo:</Col>
-                  <Col>{data?.patientInfo.gender}</Col>
-                </Row>
-
-                <Row>
-                  <Col sm={4}>Teléfono:</Col>
-                  <Col>{data?.patientInfo.cellphone_number}</Col>
-                </Row>
-                <Row>
-                  <Col className='fw-bold'>SIGNOS VITALES</Col>
-                </Row>
-                <Row>
-                  <Col sm={4}>Presión:</Col>
-                  <Col>{data?.nursingAreaInfo.pressure}</Col>
-                </Row>
-                <Row>
-                  <Col sm={4}>Estatura:</Col>
-                  <Col>{data?.nursingAreaInfo.stature + " cm"}</Col>
-                </Row>
-                <Row>
-                  <Col sm={4}>Temperatura:</Col>
-                  <Col>{data?.nursingAreaInfo.temperature + " °C"}</Col>
-                </Row>
-                <Row>
-                  <Col sm={4}>Peso:</Col>
-                  <Col>{data?.nursingAreaInfo.weight + " kg"}</Col>
-                </Row>
-
-              </div>
-            </div>
-            <div className='ficha-content'>
-              <div className={`d-flex mb-2 ${isEdit ? 'justify-content-between' : 'justify-content-end'}`}>
+      <div className='ficha-container'>
+        <Row align='end'>
+          <Col span={6}>
+            <Title
+              level={2}
+            >{isEdit ? "Actualizar ficha" : "Nueva ficha"}</Title>
+          </Col>
+          <Col span={18}>
+            <Row justify='end'>
+              <Space>
                 {
-                  isEdit
-                  &&
-                  <div className='d-flex'>
-                    <a
-                      className='btn btn-danger me-2'
+                  isEdit && <>
+                    <Button
+                      type='default'
+                      danger
                       href={END_POINT + `odontologia/pdf/${recId}`}
                       target='_blank'
-                    >Ver PDF</a>
-                    <a
-                      className='btn btn-secondary me-2'
+                    >Ver PDF</Button>
+                    <Button
+                      type='default'
                       href={END_POINT + `acta/${recId}/download`}
                       target='_blank'
-                    >Descargar acta</a>
-                  </div>
+                    >Descargar acta</Button></>
                 }
-                <Button variant='success'
+                <Button
+                  type='primary'
                   onClick={guardarFicha}
                   disabled={data ? false : true}>
                   {
                     isEdit ? "Actualizar ficha" : "Guardar ficha"
                   }
                 </Button>
-              </div>
-              <div>
-                <Tab.Container id="left-tabs-example" activeKey={key}
-                  onSelect={(k) => setKey(k)}>
-                  <Row>
-                    <Col>
-                      <Nav variant="tabs" className="d-flex">
-                        <Nav.Item>
-                          <Nav.Link eventKey="general">General</Nav.Link>
-                        </Nav.Item>
-                        <Nav.Item>
-                          <Nav.Link eventKey="antecedentes">Antecedentes</Nav.Link>
-                        </Nav.Item>
-                        <Nav.Item>
-                          <Nav.Link eventKey="indicadores">Indicadores</Nav.Link>
-                        </Nav.Item>
-                        <Nav.Item>
-                          <Nav.Link eventKey="indices">Indices</Nav.Link>
-                        </Nav.Item>
-                        <Nav.Item>
-                          <Nav.Link eventKey="diagnosticos">Diagnósticos</Nav.Link>
-                        </Nav.Item>
-                        <Nav.Item>
-                          <Nav.Link eventKey="tratamientos">Tratamientos</Nav.Link>
-                        </Nav.Item>
-                        <Nav.Item>
-                          <Nav.Link eventKey="odontograma">Odontograma</Nav.Link>
-                        </Nav.Item>
-                        <Nav.Item>
-                          <Nav.Link eventKey="acta">Acta de constit...</Nav.Link>
-                        </Nav.Item>
-                      </Nav>
-                    </Col>
-                  </Row>
-                  <Row>
-                    <Col>
-                      <Tab.Content className='border-start border-end border-bottom h-100 p-4'>
-                        <Tab.Pane eventKey="general">
-                          <Cabecera ref={cabeceraRef} />
-                        </Tab.Pane>
-                        <Tab.Pane eventKey="antecedentes">
-                          <GeneralProvider ref={familyHistoryRef}>
-                            <Antecedentes />
-                          </GeneralProvider>
-                        </Tab.Pane>
-                        <Tab.Pane eventKey="indicadores">
-                          <IndicadoresProvider ref={indicatorsRef}>
-                            <Indicadores />
-                          </IndicadoresProvider>
-                        </Tab.Pane>
-                        <Tab.Pane eventKey="indices">
-                          <IndicesCpoCeo ref={ratiosRef} />
-                        </Tab.Pane>
-                        <Tab.Pane eventKey="diagnosticos">
-                          <Diagnosticos ref={diagnosticsRef} />
-                        </Tab.Pane>
-                        <Tab.Pane eventKey="tratamientos">
-                          <Tratamientos ref={treatmentsRef} />
-                        </Tab.Pane>
-                        <Tab.Pane eventKey="odontograma">
-                          <OdontogramProvider>
-                            <Odontogram ref={odontogramaRef}/>
-                          </OdontogramProvider>
-                        </Tab.Pane>
-                        <Tab.Pane eventKey="acta">
-                          <ActaDeConstitucion ref={actaRef} />
-                        </Tab.Pane>
-                      </Tab.Content>
-                    </Col>
-                  </Row>
-                </Tab.Container>
-              </div>
-            </div>
-          </div>
-        </div>
-      }
+              </Space>
+            </Row>
+          </Col>
+        </Row>
+        
+        <Row gutter={20} style={{ marginBottom: "20px" }}>
+          <Col span={10}>
+            <CardPacienteOdontologia patient={data?.patientInfo} />
+          </Col>
+          <Col span={8}>
+            <CardPacienteEnfermeria nursingArea={data?.nursingAreaInfo} />
+          </Col>
+        
+        </Row>
+        <Card>
+          <Tabs activeKey={key} tabPosition='left' onTabClick={setKey}>
+            <TabPane tab="General" key="general">
+              <Cabecera ref={cabeceraRef} />
+            </TabPane>
+            <TabPane tab="Antecedentes" key="antecedentes">
+              <Antecedentes ref={familyHistoryRef} />
+            </TabPane>
+            <TabPane tab="Indicadores" key="indicadores">
+              <IndicadoresProvider ref={indicatorsRef}>
+                <Indicadores />
+              </IndicadoresProvider>
+            </TabPane>
+            <TabPane tab="Indices" key="indices">
+              <IndicesCpoCeo ref={ratiosRef} />
+            </TabPane>
+            <TabPane tab="Diagnósticos" key="diagnosticos">
+              <Diagnosticos ref={diagnosticsRef} />
+            </TabPane>
+            <TabPane tab="Tratamientos" key="tratamientos">
+              <Tratamientos ref={treatmentsRef} />
+            </TabPane>
+            <TabPane tab="Odontograma" key="odontograma">
+              <OdontogramProvider>
+                <Odontogram ref={odontogramaRef} />
+              </OdontogramProvider>
+            </TabPane>
+            <TabPane tab="Acta" key="acta">
+              <ActaDeConstitucion ref={actaRef} />
+            </TabPane>
+          </Tabs>
+        </Card>
+      </div>
     </>
   );
 };

@@ -184,7 +184,7 @@ export const CapturaResultados = () => {
   const [pendingTestColumnDefs] = useState([
     { headerName: "N° orden", field: "id", maxWidth: 100, sortable: true },
     { headerName: "Fecha", field: "date", sortable: true },
-    { headerName: "Hora", field: "hour", sortable: true },
+    { headerName: "Hora", field: "hour",flex:1, sortable: true },
     { headerName: "Pruebas", flex: 1, field: "test_items" }
   ])
 

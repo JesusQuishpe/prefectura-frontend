@@ -9,7 +9,8 @@ import 'ag-grid-community/dist/styles/ag-theme-alpine.css';
 import { END_POINT } from 'utils/conf'
 import ToastContext from 'contexts/ToastContext'
 import LoaderContext from 'contexts/LoaderContext'
-
+import { Card, Descriptions } from 'antd'
+import 'css/Home.css'
 const Parser = require('expr-eval').Parser;
 
 const addIsFirstTimePropertyToData = (tests) => {
@@ -43,7 +44,7 @@ export const ResultadoForm = () => {
     order_total: 0
   }
   const [form, setForm] = useState(initialForm);
-  
+
   //Coldefs para ag-grid
   const columnDefs = useMemo(() => [
     {
@@ -305,7 +306,7 @@ export const ResultadoForm = () => {
       let captura = {
         result_id: idResultado,
         tests: testsConverted
-      } 
+      }
       console.log(captura);
       await CapturaService.actualizarCaptura(captura)
       openToast("Resultados actualizados correctamente", true)
@@ -334,92 +335,35 @@ export const ResultadoForm = () => {
           >Ver PDF</a>
         </div>
       </div>
-      <Row>
+
+      <Row style={{marginBottom:"20px"}}>
         <Col>
-          <div className='border p-2 bg-light mb-3'>Datos del paciente</div>
-          <Form.Group as={Row} className="m-0" controlId="identification_number">
-            <Form.Label column sm={4} className='text-start'>
-              Cédula:
-            </Form.Label>
-            <Col >
-              <Form.Control type="text" name='identification_number' size='sm' value={form.identification_number} readOnly />
-            </Col>
-          </Form.Group>
-          <Form.Group as={Row} className="m-0" controlId="patient">
-            <Form.Label column sm={4} className='text-start'>
-              Paciente:
-            </Form.Label>
-            <Col>
-              <Form.Control type="text" name='patient' readOnly size='sm' value={form.patient} />
-            </Col>
-          </Form.Group>
-          <Form.Group as={Row} className="m-0" controlId="gender">
-            <Form.Label column sm={4} className='text-start'>
-              Sexo:
-            </Form.Label>
-            <Col>
-              <Form.Control type="text" name='gender' readOnly size='sm' value={form.gender} />
-            </Col>
-          </Form.Group>
-          <Form.Group as={Row} className="m-0" controlId="birth_date">
-            <Form.Label column sm={4} className='text-start'>
-              Fecha de nacimiento:
-            </Form.Label>
-            <Col>
-              <Form.Control type="text" name='birth_date' readOnly size='sm' value={form.birth_date} />
-            </Col>
-          </Form.Group>
-          <Form.Group as={Row} className="m-0" controlId="cellphone_number">
-            <Form.Label column sm={4} className='text-start'>
-              Teléfono:
-            </Form.Label>
-            <Col>
-              <Form.Control type="text" name='cellphone_number' readOnly size='sm' value={form.cellphone_number} />
-            </Col>
-          </Form.Group>
+          <Card
+            title="Datos del paciente"
+            bordered
+          >
+           <Descriptions title=""  column={1}>
+            <Descriptions.Item label="Cédula" >{form.identification_number}</Descriptions.Item>
+            <Descriptions.Item label="Paciente" >{form.patient}</Descriptions.Item>
+            <Descriptions.Item label="Sexo" >{form.gender}</Descriptions.Item>
+            <Descriptions.Item label="Fecha de nacimiento" >{form.birth_date}</Descriptions.Item>
+            <Descriptions.Item label="Telefono" >{form.cellphone_number}</Descriptions.Item>
+          </Descriptions>
+          </Card>
         </Col>
         <Col>
-          <div className='border p-2 bg-light mb-3'>Datos de la orden</div>
-          <Form.Group as={Row} className="m-0" controlId="order_id">
-            <Form.Label column sm={4} className='text-start'>
-              N° orden:
-            </Form.Label>
-            <Col>
-              <Form.Control type="text" name='order_id' readOnly size='sm' value={form.order_id} />
-            </Col>
-          </Form.Group>
-          <Form.Group as={Row} className="m-0" controlId="order_date">
-            <Form.Label column sm={4} className='text-start'>
-              Fecha:
-            </Form.Label>
-            <Col>
-              <Form.Control type="text" name='order_date' readOnly size='sm' value={form.order_date} />
-            </Col>
-          </Form.Group>
-          <Form.Group as={Row} className="m-0" controlId="order_hour">
-            <Form.Label column sm={4} className='text-start'>
-              Hora:
-            </Form.Label>
-            <Col>
-              <Form.Control type="text" name='order_hour' readOnly size='sm' value={form.order_hour} />
-            </Col>
-          </Form.Group>
-          <Form.Group as={Row} className="m-0" controlId="order_items">
-            <Form.Label column sm={4} className='text-start'>
-              N° pruebas:
-            </Form.Label>
-            <Col>
-              <Form.Control type="text" name='order_items' readOnly size='sm' value={form.order_items} />
-            </Col>
-          </Form.Group>
-          <Form.Group as={Row} className="m-0" controlId="order_total">
-            <Form.Label column sm={4} className='text-start'>
-              Total:
-            </Form.Label>
-            <Col>
-              <Form.Control type="text" name='order_total' readOnly size='sm' value={form.order_total} />
-            </Col>
-          </Form.Group>
+        <Card
+            title="Datos de la orden"
+            bordered
+          >
+           <Descriptions title=""  column={1}>
+            <Descriptions.Item label="N° orden" >{form.order_id}</Descriptions.Item>
+            <Descriptions.Item label="Fecha" >{form.order_date}</Descriptions.Item>
+            <Descriptions.Item label="Hora" >{form.order_hour}</Descriptions.Item>
+            <Descriptions.Item label="N° pruebas" >{form.order_items}</Descriptions.Item>
+            <Descriptions.Item label="Total" >{form.order_total}</Descriptions.Item>
+          </Descriptions>
+          </Card>
         </Col>
       </Row>
       <div className="ag-theme-alpine" style={{ height: 400, width: "100%" }}>

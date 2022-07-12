@@ -2,9 +2,10 @@ import React, { useCallback, useRef, useState } from 'react'
 import { AgGridReact } from 'ag-grid-react';
 import 'ag-grid-community/dist/styles/ag-grid.css';
 import 'ag-grid-community/dist/styles/ag-theme-alpine.css';
-import { Button, Form, Modal } from 'react-bootstrap';
 import PruebaService from 'services/PruebaService';
 import { formatNumber } from 'utils/utilidades';
+import { Col, Input, Modal, Row } from 'antd';
+import { Calculator } from './Calculator';
 
 export const ModalFormula = ({ show, closeModal, saveFormula }) => {
   //Refs
@@ -114,54 +115,63 @@ export const ModalFormula = ({ show, closeModal, saveFormula }) => {
    * Guarda la formula y cierra el modal
    * @param {Event} e 
    */
-  const handleClick = (e) => {
+  const handleOk = () => {
     saveFormula(formula)
     closeModal()
   }
 
-  return (
-    <Modal show={show} onHide={closeModal} dialogClassName='modal-25w' size='lg'>
-      <Modal.Header closeButton>
-        <Modal.Title id="exampleModalLabel">Pruebas</Modal.Title>
-      </Modal.Header>
-      <Modal.Body >
+  const onChangeFormula = (option) => {
+    if(option==="Limpiar"){
+      setFormula("")
+    }else{
+      setFormula(formula + option)
+    }
+  }
 
-        <div className="ag-theme-alpine mb-3" style={{ height: 400, width: "100%" }}>
-          <AgGridReact
-            ref={gridRef}
-            rowData={pruebas}
-            columnDefs={columnDefs}
-            rowSelection={'single'}
-            pagination
-            debounceVerticalScrollbar={true}
-            onCellKeyDown={(e) => {
-              e.event.preventDefault()
-              console.log(e);
-              if (e.event.key === "Enter") {
-                addTestToFormula(e.data.code)
-              }
-            }}
-            tabToNextCell={tabToNextCell}
-            onRowDoubleClicked={handleDoubleClickRow}
-            onGridReady={() => {
-              getPruebas()
-            }}
-          >
-          </AgGridReact>
-        </div>
-        <Form.Group>
-          <Form.Label>Fórmula</Form.Label>
-          <Form.Control type='text' name='formula' value={formula} onChange={(e) => setFormula(e.target.value)} />
-        </Form.Group>
-      </Modal.Body>
-      <Modal.Footer>
-        <Button variant="primary" onClick={handleClick}>
-          Guardar
-        </Button>
-        <Button variant="secondary" onClick={closeModal}>
-          Cancelar
-        </Button>
-      </Modal.Footer>
+  return (
+    <Modal 
+    title="Pruebas" 
+    okText="Guardar"
+    cancelText="Cancelar"
+    visible={show} 
+    onCancel={closeModal} 
+    onOk={handleOk}
+    width={1000}>
+      <Row gutter={10}>
+        <Col span={16}>
+          <div className="ag-theme-alpine mb-3" style={{ height: 400, width: "100%" }}>
+            <AgGridReact
+              ref={gridRef}
+              rowData={pruebas}
+              columnDefs={columnDefs}
+              rowSelection={'single'}
+              pagination
+              debounceVerticalScrollbar={true}
+              onCellKeyDown={(e) => {
+                e.event.preventDefault()
+                console.log(e);
+                if (e.event.key === "Enter") {
+                  addTestToFormula(e.data.code)
+                }
+              }}
+              tabToNextCell={tabToNextCell}
+              onRowDoubleClicked={handleDoubleClickRow}
+              onGridReady={() => {
+                getPruebas()
+              }}
+            >
+            </AgGridReact>
+          </div>
+        </Col>
+        <Col span={8}>
+          <Calculator onChangeFormula={onChangeFormula} />
+        </Col>
+      </Row>
+      <Row>
+        <Col span={24}>Fórmula</Col>
+        <Col span={24}><Input value={formula} disabled /></Col>
+      </Row>
+
     </Modal>
   )
 }

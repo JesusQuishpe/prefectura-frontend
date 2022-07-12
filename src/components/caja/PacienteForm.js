@@ -1,15 +1,19 @@
+import { Button, Col, DatePicker, Form, Input, Row, Select } from 'antd';
 import LoaderContext from 'contexts/LoaderContext';
 import ToastContext from 'contexts/ToastContext';
-import React, { useState, useContext, useEffect } from 'react'
-import { Button, Col, Container, Form, Row } from 'react-bootstrap'
+import React, { useState, useContext, useEffect, createRef } from 'react'
+import { Container } from 'react-bootstrap';
 import { useParams } from 'react-router-dom';
 import PatientService from 'services/PatientService';
+import moment from 'moment'
 
+const { Option } = Select;
 
 export const PacienteForm = () => {
   //Contexts
   const { openToast } = useContext(ToastContext)
   const { openLoader, closeLoader } = useContext(LoaderContext)
+  const [form] = Form.useForm()
   //Other hooks
   const { idPatient } = useParams();
   //States
@@ -18,46 +22,34 @@ export const PacienteForm = () => {
     name: "",
     lastname: "",
     birth_date: "",
-    gender: "",
+    age:0,
+    gender: null,
     cellphone_number: "",
     address: "",
-    province: "",
-    city: "",
+    province: null,
+    city: null
   }
-  const [form, setForm] = useState(initialForm);
-  
-  const isEdit = idPatient ? true : false;
+  //const [form, setForm] = useState(initialForm);
 
-  /**
-   * Handler para el formulario
-   * @param {Event} e 
-   */
-  const handleForm = (e) => {
-    const { name, value } = e.target;
-    setForm({
-      ...form,
-      [name]: value
-    });
-  };
+  const isEdit = idPatient ? true : false;
 
   /**
    * Handler para guardar el paciente
    * @param {Event} e 
    * @returns 
    */
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (values) => {
+    console.log(moment(values.birth_date).format("YYYY-MM-DD"));
     try {
-      e.preventDefault()
-      if (!form.identification_number || !form.name || !form.lastname || !form.gender) {
-        return alert("Debe completar los campos obligatorios")
-      }
+      const birth_date = moment(values.birth_date).format("YYYY-MM-DD")
       if (!isEdit) {
         openLoader("Creando paciente...")
-        await PatientService.createPatient(form)
-        setForm(initialForm)
+        await PatientService.createPatient({ ...values, birth_date })
+        //setForm(initialForm)
+        form.resetFields()
       } else {
         openLoader("Actualizando paciente")
-        await PatientService.updatePatient(form)
+        await PatientService.updatePatient({ id: idPatient, ...values, birth_date })
       }
       closeLoader()
       openToast(isEdit ? "Paciente actualizado" : "Paciente creado", true)
@@ -74,7 +66,7 @@ export const PacienteForm = () => {
    */
   const loadPatientById = async (id) => {
     let patient = await PatientService.getPatient(id);
-    setForm({ ...patient });
+    form.setFieldsValue({ ...patient, birth_date: moment(patient.birth_date) })
   }
 
   useEffect(() => {
@@ -83,162 +75,193 @@ export const PacienteForm = () => {
     }
   }, []);
 
+  const birthDateChange = (value) => {
+    let age = !value ? 0 : moment().diff(value, 'years', false)
+    form.setFieldsValue({
+      ...form.getFieldsValue(),
+      age
+    })
+  }
   return (
     <div className='pt-4'>
       <Container className='w-50 mx-auto'>
         <h3 className='my-3 text-center mb-4'>{isEdit ? "ACTUALIZAR PACIENTE" : "NUEVO PACIENTE"}</h3>
-        <Form onSubmit={handleSubmit}>
-          <Form.Group as={Row} className="mb-3" controlId="identification_number">
-            <Form.Label column sm={4} className='text-start'>
-              Cédula <span className='text-danger'>*</span> :
-            </Form.Label>
-            <Col sm={8}>
-              <Form.Control
-                type="text"
-                name='identification_number'
-                value={form.identification_number}
-                onChange={handleForm}
-                maxLength={10} />
-            </Col>
-          </Form.Group>
-          <Form.Group as={Row} className="mb-3" controlId="name">
-            <Form.Label column sm={4} className='text-start'>
-              Nombres <span className='text-danger'>*</span> :
-            </Form.Label>
-            <Col sm={8}>
-              <Form.Control
-                type="text"
-                name='name'
-                value={form.name}
-                onChange={handleForm}
-                maxLength={50} />
-            </Col>
-          </Form.Group>
-          <Form.Group as={Row} className="mb-3" controlId="lastname">
-            <Form.Label column sm={4} className='text-start'>
-              Apellidos <span className='text-danger'>*</span> :
-            </Form.Label>
-            <Col sm={8}>
-              <Form.Control
-                type="text"
-                name='lastname'
-                value={form.lastname}
-                onChange={handleForm}
-                maxLength={50} />
-            </Col>
-          </Form.Group>
-          <Form.Group as={Row} className="mb-3" controlId="birth_date">
-            <Form.Label column sm={4} className='text-start'>
-              Nacimiento (DD-MM-YYYY):
-            </Form.Label>
-            <Col sm={8}>
-              <Form.Control type="date" name='birth_date' value={form.birth_date} onChange={handleForm} />
-            </Col>
-          </Form.Group>
-          <Form.Group as={Row} className="mb-3" controlId="gender">
-            <Form.Label column sm={4} className='text-start'>
-              Sexo <span className='text-danger'>*</span> :
-            </Form.Label>
-            <Col>
-              <Form.Select sm={8} aria-label="Select para género" name='gender' value={form.gender} onChange={handleForm}>
-                <option value={""}>--Seleccione un género--</option>
-                <option value="Masculino">Masculino</option>
-                <option value="Femenino">Femenino</option>
-              </Form.Select>
-            </Col>
-          </Form.Group>
-          <Form.Group as={Row} className="mb-3" controlId="cellphone_number">
-            <Form.Label column sm={4} className='text-start'>
-              Teléfono:
-            </Form.Label>
-            <Col sm={8}>
-              <Form.Control
-                type="text"
-                name='cellphone_number'
-                value={form.cellphone_number}
-                onChange={handleForm}
-                maxLength={20} />
-            </Col>
-          </Form.Group>
-          <Form.Group as={Row} className="mb-3" controlId="address">
-            <Form.Label column sm={4} className='text-start'>
-              Domicilio:
-            </Form.Label>
-            <Col sm={8}>
-              <Form.Control
-                type="text"
-                name='address'
-                value={form.address}
-                onChange={handleForm}
-                maxLength={150} />
-            </Col>
-          </Form.Group>
-          <Form.Group as={Row} className="mb-3" controlId="province">
-            <Form.Label column sm={4} className='text-start'>
-              Provincia:
-            </Form.Label>
-            <Col>
-              <Form.Select sm={8} aria-label="Select para provincias" name='province' value={form.province} onChange={handleForm}>
-                <option value={""}>--Seleccione una provincia--</option>
-                <option>El Oro</option>
-                <option>Azuay</option>
-                <option>Bolívar</option>
-                <option>Cañar</option>
-                <option>Carchi</option>
-                <option>Chimborazo</option>
-                <option>Cotopaxi</option>
-                <option>Esmeraldas</option>
-                <option>Galápagos</option>
-                <option>Guayas</option>
-                <option>Imbabura</option>
-                <option>Loja</option>
-                <option>Los Rios</option>
-                <option>Manabi</option>
-                <option>Morona Santiago</option>
-                <option>Napo</option>
-                <option>Orellana</option>
-                <option>Pastaza</option>
-                <option>Pichincha</option>
-                <option>Santa Elena</option>
-                <option>Santo Domingo</option>
-                <option>Sucumbíos</option>
-                <option>Tungurahua</option>
-                <option>Zamora</option>
-              </Form.Select>
-            </Col>
-          </Form.Group>
-          <Form.Group as={Row} className="mb-3" controlId="city">
-            <Form.Label column sm={4} className='text-start'>
-              Ciudad:
-            </Form.Label>
-            <Col>
-              <Form.Select sm={8} aria-label="Select para ciudad" name='city' value={form.city} onChange={handleForm}>
-                <option value={""}>--Seleccione una ciudad--</option>
-                <option >Machala</option>
-                <option>Arenillas</option>
-                <option>Atahualpa</option>
-                <option>Balsas</option>
-                <option>Chilla</option>
-                <option>El Guabo</option>
-                <option>Guayaquil</option>
-                <option>Huaquillas</option>
-                <option>Las Lajas</option>
-                <option>Marcabeli</option>
-                <option>Pasaje</option>
-                <option>Piñas</option>
-                <option>Portovelo</option>
-                <option>Santa Rosa</option>
-                <option>Zaruma</option>
-              </Form.Select>
-            </Col>
-          </Form.Group>
+        <Form
+          //style={{ width: "700px" }}
+          form={form}
+          name="basic"
+          labelCol={{
+            span: 7,
+          }}
+          wrapperCol={{
+            span: 18,
+          }}
+          initialValues={{
+            ...initialForm
+          }}
+          onFinish={handleSubmit}
+          //onFinishFailed={onFinishFailed}
+          autoComplete="off"
+        >
+          <Form.Item
+            label="Cédula"
+            name="identification_number"
+            rules={[
+              {
+                required: true,
+                message: 'Ingresa un número de cédula!',
+              },
+            ]}
+          >
+            <Input maxLength={10} />
+          </Form.Item>
+          <Form.Item
+            label="Nombres"
+            name="name"
+            rules={[
+              {
+                required: true,
+                message: 'Ingrese los nombres del paciente!',
 
-          <Button
-            type='submit'
-            variant='primary'
-            className='float-end'>
-            {isEdit ? "Actualizar" : 'Guardar'}
-          </Button>
+              },
+            ]}
+          >
+            <Input maxLength={50} />
+          </Form.Item>
+          <Form.Item
+            label="Apellidos"
+            name="lastname"
+            rules={[
+              {
+                required: true,
+                message: 'Ingrese los apellidos del paciente!',
+              },
+            ]}
+          >
+            <Input maxLength={50} />
+          </Form.Item>
+
+          <Form.Item label="Fecha de nacimiento" style={{ marginBottom: 0, }}>
+            <Row gutter={10}>
+              <Col span={12}>
+                <Form.Item noStyle name="birth_date">
+                  <DatePicker placeholder='Selecciona la fecha' style={{ width: "100%" }} onChange={birthDateChange} />
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item name="age">
+                  <Input disabled />
+                </Form.Item>
+              </Col>
+            </Row>
+
+          </Form.Item>
+
+          <Form.Item name="gender" label="Sexo" rules={[{ required: true, message: "El campo es requerido" }]}>
+            <Select
+              placeholder="Selecciona un género"
+              //onChange={this.onGenderChange}
+              allowClear
+            >
+              <Option value="Masculino">Masculino</Option>
+              <Option value="Femenino">Femenino</Option>
+            </Select>
+          </Form.Item>
+
+          <Form.Item
+            label="Teléfono"
+            name="cellphone_number"
+            rules={[
+              {
+                required: true,
+                message: 'Ingrese un número de celular!',
+                max: 20
+              },
+            ]}
+          >
+            <Input maxLength={20} />
+          </Form.Item>
+          <Form.Item
+            label="Domicilio"
+            name="address"
+            rules={[
+              {
+                required: true,
+                message: 'Ingrese una dirección de domicilio!',
+
+              },
+            ]}
+          >
+            <Input maxLength={150} />
+          </Form.Item>
+
+          <Form.Item name="province" label="Provincia" rules={[{ required: true, message: "El campo es requerido" }]}>
+            <Select
+              placeholder="Selecciona una provincia"
+              //onChange={this.onGenderChange}
+              allowClear
+            >
+              <Option value='El Oro'>El Oro</Option>
+              <Option value='Azuay'>Azuay</Option>
+              <Option value='Bolívar'>Bolívar</Option>
+              <Option value='Cañar'>Cañar</Option>
+              <Option value='Carchi'>Carchi</Option>
+              <Option value='Chimborazo'>Chimborazo</Option>
+              <Option value='Cotopaxi'>Cotopaxi</Option>
+              <Option value='Esmeraldas'>Esmeraldas</Option>
+              <Option value='Galápagos'>Galápagos</Option>
+              <Option value='Guayas'>Guayas</Option>
+              <Option value='Imbabura'>Imbabura</Option>
+              <Option value='Loja'>Loja</Option>
+              <Option value='Los Rios'>Los Rios</Option>
+              <Option value='Manabi'>Manabi</Option>
+              <Option value='Morona Santiago'>Morona Santiago</Option>
+              <Option value='Napo'>Napo</Option>
+              <Option value='Orellana'>Orellana</Option>
+              <Option value='Pastaza'>Pastaza</Option>
+              <Option value='Pichincha'>Pichincha</Option>
+              <Option value='Santa Elena'>Santa Elena</Option>
+              <Option value='Santo Domingo'>Santo Domingo</Option>
+              <Option value='Sucumbíos'>Sucumbíos</Option>
+              <Option value='Tungurahua'>Tungurahua</Option>
+              <Option value='Zamora'>Zamora</Option>
+            </Select>
+          </Form.Item>
+
+          <Form.Item name="city" label="Ciudad" rules={[{ required: true, message: "El campo es requerido" }]}>
+            <Select
+              placeholder="Selecciona una ciudad"
+              //onChange={this.onGenderChange}
+              allowClear
+            >
+              <Option value='Machala'>Machala</Option>
+              <Option value='Arenilla'>Arenillas</Option>
+              <Option value='Atahualpa'>Atahualpa</Option>
+              <Option value='Balsas'>Balsas</Option>
+              <Option value='Chilla'>Chilla</Option>
+              <Option value='El Guabo'>El Guabo</Option>
+              <Option value='Guayaquil'>Guayaquil</Option>
+              <Option value='Huaquillas'>Huaquillas</Option>
+              <Option value='Las Lajas'>Las Lajas</Option>
+              <Option value='Marcabeli'>Marcabeli</Option>
+              <Option value='Pasaje'>Pasaje</Option>
+              <Option value='Piñas'>Piñas</Option>
+              <Option value='Portovelo'>Portovelo</Option>
+              <Option value='Santa Rosa'>Santa Rosa</Option>
+              <Option value='Zaruma'>Zaruma</Option>
+            </Select>
+          </Form.Item>
+
+          <Form.Item
+            wrapperCol={{
+              offset: 7,
+              span: 16,
+            }}
+          >
+            <Button type="primary" htmlType="submit">
+              {isEdit ? "Actualizar" : 'Guardar'}
+            </Button>
+          </Form.Item>
         </Form>
       </Container>
 

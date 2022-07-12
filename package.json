@@ -4,11 +4,13 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@reduxjs/toolkit": "^1.8.3",
     "@testing-library/jest-dom": "^5.16.1",
     "@testing-library/react": "^12.1.2",
     "@testing-library/user-event": "^13.5.0",
     "ag-grid-community": "^27.1.0",
     "ag-grid-react": "^27.1.0",
+    "antd": "^4.20.6",
     "axios": "^0.24.0",
     "bootstrap": "^5.1.3",
     "dom-to-image": "^2.6.0",
@@ -20,8 +22,11 @@
     "react-data-table-component": "^7.4.6",
     "react-dom": "^17.0.2",
     "react-dropzone": "^12.0.4",
+    "react-highlight-words": "^0.18.0",
     "react-icons": "^4.3.1",
     "react-qr-code": "^2.0.3",
+    "react-qr-reader": "^3.0.0-beta-1",
+    "react-redux": "^8.0.2",
     "react-router-dom": "^6.2.1",
     "react-scripts": "^5.0.0",
     "react-select": "^5.2.2",
@@ -37,7 +42,7 @@
     "eject": "react-scripts eject",
     "start:local": "env-cmd -e LOCAL npm run start",
     "start:pro": "env-cmd -e PRO npm run start",
-    "build:pro":"env-cmd -e PRO npm run build"
+    "build:pro": "env-cmd -e PRO npm run build"
   },
   "eslintConfig": {
     "extends": [

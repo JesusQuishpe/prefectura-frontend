@@ -1,94 +1,107 @@
 import { MyCustomLoader } from 'components/MyCustomLoader';
 import ToastContext from 'contexts/ToastContext';
 import React, { useContext, useEffect, useRef, useState } from 'react';
-import { Button, Form, FormControl, InputGroup } from 'react-bootstrap';
-import DataTable from 'react-data-table-component';
 import { AiFillDelete, AiFillEdit, AiFillFileAdd } from 'react-icons/ai';
 import { Link, useNavigate } from 'react-router-dom';
 import PatientService from 'services/PatientService';
+import { Button, Col, Form, Input, Pagination, Popconfirm, Row, Space, Table, Tag } from 'antd';
+import { QrcodeOutlined, DeleteOutlined } from '@ant-design/icons';
+import Search from 'antd/lib/input/Search';
+import { END_POINT } from 'utils/conf'
+import { CustomSearch } from 'components/CustomSearch';
+import QRModalContext from 'contexts/QrModalContext';
+import { ModalQrReader } from './ModalQrReader';
 
-
-//Config datatable
-const paginationConfig = {
-  rowsPerPageText: "Filas por página",
-  rangeSeparatorText: "de",
-  selectAllRowsItem: true,
-  selectAllRowsItemText: "Todos"
-}
-
-const Acciones = ({ row }) => {
+const Acciones = ({ record, handleDelete, confirmLoading }) => {
   const navigate = useNavigate();
 
   const editarClick = () => {
-    navigate(`editar/${row.id}`);
+    navigate(`editar/${record.key}`);
   }
   return (
-    <div className='d-flex flex-nowrap'>
-      <Button variant='primary' className='me-2' onClick={editarClick}><AiFillEdit /></Button>
-      <Button variant='danger'><AiFillDelete /></Button>
-    </div>
+    <Space size={'middle'}>
+      <Button type="default" href={END_POINT + `pacientes/${record.id}/qr`} target="_blank"><QrcodeOutlined style={{ fontSize: '18px' }} /></Button>
+      <Button type='primary' onClick={editarClick}><AiFillEdit /></Button>
+      <Popconfirm
+        title="Está seguro de eliminar?"
+        //visible={visible}
+        onConfirm={() => handleDelete(record.id)}
+        okButtonProps={{
+          loading: confirmLoading,
+        }}
+      //onCancel={() => setVisible(false)}
+      >
+        <Button type='primary' danger ><DeleteOutlined /></Button>
+      </Popconfirm>
+    </Space>
   )
 }
 
+const mapData = (patients) => {
+  console.log(patients);
+  return patients?.map(pat => ({
+    id: pat.id,
+    key: pat.id,
+    identification_number: pat.identification_number,
+    fullname: pat.fullname,
+    city: pat.city
+  }))
+}
+
 export const PacienteDashboard = () => {
-  //Refs
-  const tableRef = useRef()
-  const inputRef = useRef();
   //Contexts
   const { openToast } = useContext(ToastContext)
+  const { visible } = useContext(QRModalContext)
   //States
   const [patients, setPatients] = useState([]);
   const [pending, setPending] = useState(true);
   const [page, setPage] = useState(1);
+  const [isSearching, setIsSearching] = useState(false)
+  const [confirmLoading, setConfirmLoading] = useState(false);
+
+
+  const handleDeletePatient = () => {
+    console.log("PAciente eliminado");
+  }
   const columns = [
     {
-      name: "Id",
-      width: "100px",
-      selector: (row) => row.id,
-      sortable: true
+      title: "Id",
+      dataIndex: "key",
     },
     {
-      name: "Cédula",
-      width: "150px",
-      selector: (row) => row.identification_number,
-      sortable: true
+      title: "Cedula",
+      dataIndex: "identification_number",
     },
     {
-      name: "Paciente",
-      minWidth: "400px",
-      selector: (row) => row.fullname,
-      sortable: true
+      title: "Paciente",
+      dataIndex: "fullname",
     },
     {
-      name: "Ciudad",
-      width: "100px",
-      selector: (row) => row.city,
-      sortable: true
+      title: "Ciudad",
+      dataIndex: "city"
     },
     {
-      name: "Sexo",
-      selector: (row) => row.gender,
-      sortable: true
-    },
-    {
-      name: "Acciones",
-      cell: (row) => <Acciones row={row} />,
-      ignoreRowClick: true,
+      title: "Acciones",
+      render: (_, record) => (
+        <Acciones record={record} handleDelete={handleDeletePatient} confirmLoading={confirmLoading} />
+      ),
     }
-  ];
-
+  ]
   /**
    * Carga los pacientes paginados
    */
-  const loadPatients = async () => {
+  const loadPatients = async (page) => {
+    console.log("HOLA");
     try {
       setPending(true)
-      let patientsFromService = await PatientService.getPatients(page);
-      setPatients(patientsFromService)
+      let patientFromService = await PatientService.getPatients(page);
+      setPatients(patientFromService)
+      console.log(patientFromService);
       setPending(false)
     } catch (error) {
       console.log(error);
       openToast("Ha ocurrido un error inesperado...", false)
+      setPending(false)
     }
   }
 
@@ -96,19 +109,23 @@ export const PacienteDashboard = () => {
    * Carga los pacientes cuando la page del ag-grid cambia
    */
   useEffect(() => {
-    loadPatients();
+    console.log("PAGE");
+    loadPatients(page)
   }, [page]);
 
   /**
    * Handler para buscar un paciente por numero de cedula
    */
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (identification) => {
     try {
-      e.preventDefault()
-      let identification = inputRef.current.value
+
       if (!identification) return
       let patientFromService = await PatientService.searchByIdentification(identification)
-      setPatients(patientFromService)
+      console.log(patientFromService);
+      let patients = []
+      patients.push(patientFromService)
+      setPatients(patients)
+      setIsSearching(true)
     } catch (error) {
       console.log(error);
       openToast("Ha ocurrido un error inesperado...", false)
@@ -117,9 +134,17 @@ export const PacienteDashboard = () => {
   /**
    * Handler para cargar todos los pacientes y establecer la page en  1
    */
-  const handleShowAllClick = () => {
-    setPage(1)
-    loadPatients()
+  const handleShowAllClick = (e) => {
+    if (page === 1) {
+      loadPatients(1)
+    } else {
+      setPage(1)
+    }
+    setIsSearching(false)
+  }
+
+  const onShowSizeChange = (current, pageSize) => {
+    console.log(current, pageSize);
   }
 
   return (
@@ -129,40 +154,40 @@ export const PacienteDashboard = () => {
         <div className='mb-4'>
           <Link className='btn btn-success' to={"nuevo"}><AiFillFileAdd /> Nuevo</Link>
         </div>
-        <Form onSubmit={handleSubmit}>
-          <InputGroup className="mb-3">
-            <FormControl
-              placeholder="Buscar por cedula del paciente"
-              aria-label="Input para el número de cedula del paciente"
-              className='me-2'
-              type='text'
-              ref={inputRef}
+        <Row gutter={2} wrap={false}>
+          <Col flex={5}>
+            <CustomSearch
+              onSearch={handleSubmit}
+              placeholder="Buscar por número de cedula"
+              allowClear
             />
-            <Button variant="secondary" type='submit' className="me-2">
-              Buscar
-            </Button>
-            <Button onClick={handleShowAllClick}>Mostrar todos</Button>
-          </InputGroup>
-        </Form>
-        <div ref={tableRef} className='h-100'>
-          <DataTable
-            columns={columns}
-            data={patients.data}
-            title={'Tabla pacientes'}
-            pagination
-            paginationServer
-            paginationTotalRows={patients.total}
-            paginationPerPage={patients.per_page}
-            paginationComponentOptions={paginationConfig}
-            persistTableHead
-            onChangePage={page => setPage(page)}
-            progressPending={pending}
-            progressComponent={<MyCustomLoader />}
-          //customStyles={customStyles}
+          </Col>
+          <Col flex={"none"}>
+            <Button onClick={handleShowAllClick}>Restablecer</Button>
+          </Col>
+        </Row>
 
+        <Table
+          columns={columns}
+          dataSource={isSearching ? mapData(patients) : mapData(patients.data)}
+          loading={pending}
+          pagination={
+            {
+              onChange: setPage,
+              total: patients?.total,
+              current: page,
+              pageSize: 10,
+            }
+          }
+        />
+        
+        {
+          visible && <ModalQrReader
+            handleSearch={handleSubmit}
           />
-        </div>
+        }
       </div>
+
     </>
   );
 }

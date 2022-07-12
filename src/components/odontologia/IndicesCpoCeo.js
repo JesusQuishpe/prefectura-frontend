@@ -1,48 +1,40 @@
+import { Col, Form, InputNumber, Row } from 'antd';
 import OdontologyContext from 'contexts/OdontologyContext';
 import React, { forwardRef, useState, useImperativeHandle, useContext, useEffect } from 'react';
-import { Col, Form, FormGroup, Row } from 'react-bootstrap';
 
 const IndicesCpoCeo = forwardRef((props, ref) => {
+  console.log("INDICES");
   const { data } = useContext(OdontologyContext)
 
-  const initialForm = {
-    cpo_c: "",
-    ceo_c: "",
-    cpo_p: "",
-    ceo_e: "",
-    cpo_o: "",
-    ceo_o: "",
-    cpo_total: "",
-    ceo_total: "",
-    id: null
-  }
-  const [form, setForm] = useState(initialForm)
+  const [form] = Form.useForm()
+  const formWatched = Form.useWatch([], form)
 
   const sumarIndices = (n1, n2, n3) => {
-    let num1 = parseFloat(n1)
-    let num2 = parseFloat(n2)
-    let num3 = parseFloat(n3)
-    if (isNaN(num1) || isNaN(num2) || isNaN(num3)) return 0
+    let num1 = parseFloat(n1) || 0
+    let num2 = parseFloat(n2) || 0
+    let num3 = parseFloat(n3) || 0
+    //if (isNaN(num1) || isNaN(num2) || isNaN(num3)) return 0
     return num1 + num2 + num3;
   }
 
-  const handleFormChange = (e) => {
-    const copyForm = { ...form, [e.target.name]: e.target.value }
-
-    copyForm.cpo_total = sumarIndices(copyForm.cpo_c, copyForm.cpo_p, copyForm.cpo_o)
-    copyForm.ceo_total = sumarIndices(copyForm.ceo_c, copyForm.ceo_e, copyForm.ceo_o)
-
-    setForm(copyForm)
-
+  const handleFormChange = (value, values) => {
+    const newValues = { ...values, ...value }
+    newValues.cpo_total = sumarIndices(newValues.cpo_c, newValues.cpo_p, newValues.cpo_o)
+    newValues.ceo_total = sumarIndices(newValues.ceo_c, newValues.ceo_e, newValues.ceo_o)
+    console.log(values);
+    form.setFieldsValue(newValues)
   }
 
   useImperativeHandle(ref, () => {
     return {
-      data: convertEmptyToZero()
+      data: {
+        ...convertEmptyToZero(formWatched),
+        id: data?.cpoCeoRatios?.id || null
+      }
     }
-  })
+  }, [formWatched, data])
 
-  const convertEmptyToZero = () => {
+  const convertEmptyToZero = (form) => {
     let newData = { ...form }
     for (const key in newData) {
       if (Object.hasOwnProperty.call(newData, key)) {
@@ -57,139 +49,65 @@ const IndicesCpoCeo = forwardRef((props, ref) => {
 
   useEffect(() => {
     if (data) {
-      setForm({
-        cpo_c: data?.cpoCeoRatios?.cd || "",
-        ceo_c: data?.cpoCeoRatios?.ce || "",
-        cpo_p: data?.cpoCeoRatios?.pd || "",
-        ceo_e: data?.cpoCeoRatios?.ee || "",
-        cpo_o: data?.cpoCeoRatios?.od || "",
-        ceo_o: data?.cpoCeoRatios?.oe || "",
-        cpo_total: data?.cpoCeoRatios?.cpo_total || "",
-        ceo_total: data?.cpoCeoRatios?.ceo_total || "",
-        id: data?.cpoCeoRatios?.id || null
+      form.setFieldsValue({
+        cpo_c: data?.cpoCeoRatios?.cd || 0,
+        ceo_c: data?.cpoCeoRatios?.ce || 0,
+        cpo_p: data?.cpoCeoRatios?.pd || 0,
+        ceo_e: data?.cpoCeoRatios?.ee || 0,
+        cpo_o: data?.cpoCeoRatios?.od || 0,
+        ceo_o: data?.cpoCeoRatios?.oe || 0,
+        cpo_total: data?.cpoCeoRatios?.cpo_total || 0,
+        ceo_total: data?.cpoCeoRatios?.ceo_total || 0,
+
       })
     }
-  }, [data])
+  }, [data, form])
 
   return (
     <>
-      <h3 className='mb-3'>Indices cpo-ceo</h3>
+      <h5 className='mb-3'>Indices cpo-ceo</h5>
       <div className='w-50 mx-auto'>
-
-        <Row className='mb-2'>
-          <Col>
-            <FormGroup as={Row}>
-              <Form.Label as={Col} sm={4}>C:</Form.Label>
-              <Col>
-                <Form.Control
-                  type='number'
-                  name='cpo_c'
-                  value={form.cpo_c}
-                  onChange={handleFormChange} />
-              </Col>
-            </FormGroup>
-          </Col>
-          <Col>
-            <FormGroup as={Row}>
-              <Form.Label as={Col} sm={4}>c:</Form.Label>
-              <Col>
-                <Form.Control
-                  type='number'
-                  name='ceo_c'
-                  value={form.ceo_c}
-                  onChange={handleFormChange}
-                />
-              </Col>
-            </FormGroup>
-          </Col>
-        </Row>
-        <Row className='mb-2'>
-          <Col>
-            <FormGroup as={Row}>
-              <Form.Label as={Col} sm={4}>P:</Form.Label>
-              <Col>
-                <Form.Control
-                  type='number'
-                  name='cpo_p'
-                  value={form.cpo_p}
-                  onChange={handleFormChange}
-                />
-              </Col>
-            </FormGroup>
-          </Col>
-          <Col>
-            <FormGroup as={Row}>
-              <Form.Label as={Col} sm={4}>e:</Form.Label>
-              <Col>
-                <Form.Control
-                  type='number'
-                  name='ceo_e'
-                  value={form.ceo_e}
-                  onChange={handleFormChange}
-                />
-              </Col>
-            </FormGroup>
-          </Col>
-        </Row>
-        <Row className='mb-2'>
-          <Col>
-            <FormGroup as={Row}>
-              <Form.Label as={Col} sm={4}>O:</Form.Label>
-              <Col>
-                <Form.Control
-                  type='number'
-                  name='cpo_o'
-                  value={form.cpo_o}
-                  onChange={handleFormChange}
-                />
-              </Col>
-            </FormGroup>
-          </Col>
-          <Col>
-            <FormGroup as={Row}>
-              <Form.Label as={Col} sm={4}>o:</Form.Label>
-              <Col>
-                <Form.Control
-                  type='number'
-                  name='ceo_o'
-                  value={form.ceo_o}
-                  onChange={handleFormChange}
-
-                />
-              </Col>
-            </FormGroup>
-          </Col>
-        </Row>
-        <Row className='mb-2'>
-          <Col>
-            <FormGroup as={Row}>
-              <Form.Label as={Col} sm={4}>Total:</Form.Label>
-              <Col>
-                <Form.Control
-                  type='number'
-                  name='cpo_total'
-                  value={form.cpo_total}
-                  onChange={handleFormChange}
-                  disabled
-                />
-              </Col>
-            </FormGroup>
-          </Col>
-          <Col>
-            <FormGroup as={Row}>
-              <Form.Label as={Col} sm={4}>Total:</Form.Label>
-              <Col>
-                <Form.Control
-                  type='number'
-                  name='ceo_total'
-                  value={form.ceo_total}
-                  onChange={handleFormChange}
-                  disabled
-                />
-              </Col>
-            </FormGroup>
-          </Col>
-        </Row>
+        <Form
+          form={form}
+          labelCol={{
+            span: 6,
+          }}
+          wrapperCol={{
+            span: 18,
+          }}
+          onValuesChange={handleFormChange}
+        >
+          <Row gutter={20}>
+            <Col span={12}>
+              <Form.Item label="C" name="cpo_c">
+                <InputNumber />
+              </Form.Item>
+              <Form.Item label="P" name="cpo_p">
+                <InputNumber />
+              </Form.Item>
+              <Form.Item label="O" name="cpo_o">
+                <InputNumber />
+              </Form.Item>
+              <Form.Item label="Total" name="cpo_total">
+                <InputNumber />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item label="C" name="ceo_c">
+                <InputNumber />
+              </Form.Item>
+              <Form.Item label="E" name="ceo_e">
+                <InputNumber />
+              </Form.Item>
+              <Form.Item label="O" name="ceo_o">
+                <InputNumber />
+              </Form.Item>
+              <Form.Item label="Total" name="ceo_total">
+                <InputNumber />
+              </Form.Item>
+            </Col>
+          </Row>
+        </Form>
       </div>
     </>
   )

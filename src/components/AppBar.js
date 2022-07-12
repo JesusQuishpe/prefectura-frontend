@@ -13,6 +13,7 @@ export const AppBar = () => {
   const navigate = useNavigate();
 
   const [modules, setModules] = useState([])
+  
   const handleNavItemClick = (e, module) => {
     if (module.path) navigate(module.path);
   }

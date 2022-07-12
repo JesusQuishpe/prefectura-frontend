@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react'
-import { Button, Col, Form, Row } from 'react-bootstrap'
+//import { Button, Col, Form, Row } from 'react-bootstrap'
 import { useNavigate } from 'react-router-dom'
 import { useUser } from 'hooks/useUser'
 import LogoSoftware from 'assets/png/logo-software.png'
+import { Button, Checkbox, Col, Form, Input, Row } from 'antd'
 
 export const Login = () => {
   //States
@@ -15,17 +16,6 @@ export const Login = () => {
   const navigate = useNavigate()
   const { login, isLogged } = useUser()
 
-  /**
-   * Handler para actualizar los valores del formulario
-   * @param {Event} e 
-   */
-  const handleChange = (e) => {
-    const { name, value } = e.target
-    setForm({
-      ...form,
-      [name]: value
-    })
-  }
 
   /**
    * Handler para loguear al usuario
@@ -47,12 +37,19 @@ export const Login = () => {
       }
     }
   }
+  const onFinish = (values) => {
+    console.log('Success:', values);
+    login(values)
+  }
 
+  const onFinishFailed = (errorInfo) => {
+    console.log('Failed:', errorInfo);
+  };
   useEffect(() => {
     if (isLogged) return navigate('/');
   }, [isLogged])
 
-  return (
+  /*return (
     <div className='d-flex justify-content-center align-items-center min-vh-100'>
       <Form className='w-50 p-4' onSubmit={handleClick}>
         <div className='d-flex flex-column align-items-center mb-4'>
@@ -79,5 +76,65 @@ export const Login = () => {
         </div>
       </Form>
     </div>
+  )*/
+  return (
+    <Row type="flex" justify="center" align="middle" style={{ minHeight: '100vh' }}>
+      <Col>
+        <Form
+          style={{ width: "700px" }}
+          name="basic"
+          labelCol={{
+            span: 6,
+          }}
+          wrapperCol={{
+            span: 16,
+          }}
+          onFinish={onFinish}
+          onFinishFailed={onFinishFailed}
+          autoComplete="on"
+        >
+          <Row justify='center' className='mb-3'>
+            <Col>
+              <img src={LogoSoftware} width={300} alt="Logo.png" />
+            </Col>
+          </Row>
+          <Form.Item
+            label="Correo electrónico"
+            name="email"
+            rules={[
+              {
+                required: true,
+                message: 'Ingresa un correo electrónico!',
+              },
+            ]}
+          >
+            <Input />
+          </Form.Item>
+
+          <Form.Item
+            label="Contraseña"
+            name="password"
+            rules={[
+              {
+                required: true,
+                message: 'Ingresa una contraseña!',
+              },
+            ]}
+          >
+            <Input.Password />
+          </Form.Item>
+
+          <Form.Item
+            wrapperCol={{
+              offset: 6,
+              span: 16,
+            }}
+          >
+            <Button type="primary" htmlType="submit">
+              Iniciar sesión
+            </Button>
+          </Form.Item>
+        </Form></Col>
+    </Row>
   )
 }

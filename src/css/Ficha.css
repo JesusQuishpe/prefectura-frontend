@@ -382,3 +382,10 @@ textarea {
 .thumb-text.overflow{
   text-overflow: ellipsis;
 }
+
+.space-align-container {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+

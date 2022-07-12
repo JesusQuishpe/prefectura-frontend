@@ -3,7 +3,7 @@ import { END_POINT } from "utils/conf";
 
 export default function CajaService() { }
 
-CajaService.getCitas = async function ({ identification, startDate, endDate, stateFilter, page }) {
+CajaService.getCitas = async function ({ identification="", startDate="", endDate="", stateFilter="atendidas", page }) {
   console.log(END_POINT + `citas?identification=${identification}&startDate=${startDate}&
   endDate=${endDate}&stateFilter=${stateFilter}&page=${page}`);
   let response = await axios.get(END_POINT + `citas?identification=${identification}&startDate=${startDate}&
